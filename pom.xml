@@ -27,6 +27,21 @@
         </license>
     </licenses>
 
+    <developers>
+        <developer>
+            <id>natechadwick-intsof</id>
+            <name>Nate Chadwick</name>
+            <email>63952448+natechadwick-intsof@users.noreply.github.com</email>
+            <organization>Intersoft Data Labs</organization>
+            <organizationUrl>https://www.intsof.com/</organizationUrl>
+            <roles>
+                <role>Developer</role>
+                <role>Maintainer</role>
+            </roles>
+            <timezone>-5</timezone>
+        </developer>
+    </developers>
+
     <prerequisites>
         <maven>3.9.14</maven>
     </prerequisites>
@@ -64,6 +79,7 @@
         <maven.site.plugin.version>3.21.0</maven.site.plugin.version>
         <maven.project.info.reports.plugin.version>3.9.0</maven.project.info.reports.plugin.version>
         <spotless.version>2.46.1</spotless.version>
+        <central.publishing.plugin.version>0.9.0</central.publishing.plugin.version>
 
         <!-- Signing configuration -->
         <sign>false</sign>
@@ -229,6 +245,16 @@
                     <useReleaseProfile>false</useReleaseProfile>
                     <releaseProfiles>release</releaseProfiles>
                     <goals>deploy</goals>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.sonatype.central</groupId>
+                <artifactId>central-publishing-maven-plugin</artifactId>
+                <version>${central.publishing.plugin.version}</version>
+                <extensions>true</extensions>
+                <configuration>
+                    <publishingServerId>central</publishingServerId>
+                    <autoPublish>false</autoPublish>
                 </configuration>
             </plugin>
             <plugin>
