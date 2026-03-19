@@ -49,7 +49,7 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <maven.api.version>3.9.14</maven.api.version>
         <maven.plugin.tools.version>3.14.0</maven.plugin.tools.version>
-        <junit5.version>5.11.4</junit5.version>
+        <junit5.version>5.14.3</junit5.version>
         <mockito.version>5.23.0</mockito.version>
 
         <!-- Plugin versions -->
