@@ -60,6 +60,10 @@ public class HashGeneratorMojo extends AbstractMojo {
   @Parameter(defaultValue = "${project}", readonly = true, required = true)
   private MavenProject project;
 
+  /** If true, the mojo will only execute in the reactor's execution root project. */
+  @Parameter(property = "ai.integrity.executionRootOnly", defaultValue = "false")
+  private boolean executionRootOnly;
+
   /**
    * Hash algorithm bit width. Determines both the algorithm (SHA-256, SHA-384, SHA-512) and the
    * default output extension (.sha256, .sha384, .sha512).
@@ -98,6 +102,11 @@ public class HashGeneratorMojo extends AbstractMojo {
 
   @Override
   public void execute() throws MojoExecutionException {
+    if (executionRootOnly && !project.isExecutionRoot()) {
+      getLog().info("Skipping HashGeneratorMojo execution in non-root project.");
+      return;
+    }
+
     String algorithm = HashUtils.resolveAlgorithm(algorithmBits);
     String ext = resolveExtension();
 
