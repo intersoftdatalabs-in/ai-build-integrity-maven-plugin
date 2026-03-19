@@ -22,11 +22,13 @@ All contributors are expected to follow our standard Code of Conduct (be kind, b
    ```bash
    mvn spotless:apply
    ```
+
 4. Run all tests to ensure no regressions:
 
    ```bash
    mvn clean test
    ```
+
 5. Commit your changes with descriptive commit messages.
 6. Push your branch to your fork and open a Pull Request.
 
@@ -39,9 +41,9 @@ All contributors are expected to follow our standard Code of Conduct (be kind, b
 
 ## Development Environment
 
-* **Java**: JDK 11 or newer is required.
-* **Maven**: 3.6.3 or newer is recommended.
-* **Formatting**: We use the [Google Java Style Guide](https://google.github.io/styleguide/javaguide.html). This is enforced by the `spotless-maven-plugin`.
+- **Java**: JDK 11 or newer is required.
+- **Maven**: 3.9.14 or newer is required.
+- **Formatting**: We use the [Google Java Style Guide](https://google.github.io/styleguide/javaguide.html). This is enforced by the `spotless-maven-plugin`.
 
 ## License
 
