@@ -55,6 +55,12 @@ import org.apache.maven.project.MavenProject;
 @Mojo(name = "verify-hashes", defaultPhase = LifecyclePhase.TEST, requiresProject = true)
 public class HashVerifyMojo extends AbstractMojo {
 
+  /**
+   * Maximum allowed size for a hash sidecar file (8 KiB). Files larger than this are rejected to
+   * prevent reading maliciously large files.
+   */
+  static final long MAX_HASH_FILE_SIZE = 8 * 1024;
+
   /** Current Maven project instance. */
   @Parameter(defaultValue = "${project}", readonly = true, required = true)
   private MavenProject project;
@@ -146,7 +152,41 @@ public class HashVerifyMojo extends AbstractMojo {
       }
 
       try {
-        String storedHash = Files.readString(hashFile).split("\\s+")[0];
+        long hashFileSize = Files.size(hashFile);
+        if (hashFileSize > MAX_HASH_FILE_SIZE) {
+          getLog()
+              .error(
+                  "Hash file too large ("
+                      + hashFileSize
+                      + " bytes, max "
+                      + MAX_HASH_FILE_SIZE
+                      + "): "
+                      + hashFile);
+          failed++;
+          continue;
+        }
+
+        String content = Files.readString(hashFile);
+        String[] parts = content.split("\\s+");
+        String storedHash = parts[0];
+
+        if (parts.length >= 2) {
+          String embeddedFilename = parts[1].strip();
+          String expectedFilename = sourceFile.getFileName().toString();
+          if (!embeddedFilename.equals(expectedFilename)) {
+            getLog()
+                .error(
+                    "FILENAME MISMATCH in hash file: expected '"
+                        + expectedFilename
+                        + "' but found '"
+                        + embeddedFilename
+                        + "' in "
+                        + hashFile);
+            failed++;
+            continue;
+          }
+        }
+
         String computedHash = HashUtils.computeHash(sourceFile, algorithm);
 
         if (storedHash.equals(computedHash)) {

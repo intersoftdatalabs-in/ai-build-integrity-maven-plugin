@@ -1,5 +1,8 @@
 # AI Build Integrity Maven Plugin
 
+[![Maven Central](https://img.shields.io/maven-central/v/com.intsof/ai-build-integrity-maven-plugin)](https://central.sonatype.com/artifact/com.intsof/ai-build-integrity-maven-plugin)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+
 A Maven plugin that generates and verifies cryptographic hashes for AI instruction files, ensuring that **nothing changes AI instructions once the build has begun or once the artifact is shipped**.
 
 ## The Problem
@@ -27,7 +30,7 @@ This ensures supply-chain integrity for AI instructions throughout the build lif
 ```xml
 <groupId>com.intsof</groupId>
 <artifactId>ai-build-integrity-maven-plugin</artifactId>
-<version>1.0.0-SNAPSHOT</version>
+<version>LATEST</version>
 ```
 
 ## Quick Start
@@ -46,7 +49,7 @@ Use this setup when your build only reads instruction files, or when tools like 
         <plugin>
             <groupId>com.intsof</groupId>
             <artifactId>ai-build-integrity-maven-plugin</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
+            <version>LATEST</version>
             <executions>
                 <execution>
                     <id>generate-hashes</id>
@@ -77,7 +80,7 @@ Add to the parent POM's `<build><plugins>` section. Each child module will autom
 <plugin>
     <groupId>com.intsof</groupId>
     <artifactId>ai-build-integrity-maven-plugin</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>LATEST</version>
     <executions>
         <execution>
             <id>generate-hashes</id>
@@ -124,7 +127,7 @@ Common examples of mutating plugins include Spotless `apply`, license-header plu
         <plugin>
             <groupId>com.intsof</groupId>
             <artifactId>ai-build-integrity-maven-plugin</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
+            <version>LATEST</version>
             <executions>
                 <execution>
                     <id>generate-hashes</id>
@@ -158,7 +161,7 @@ Important ordering notes:
 <plugin>
     <groupId>com.intsof</groupId>
     <artifactId>ai-build-integrity-maven-plugin</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>LATEST</version>
     <configuration>
         <algorithmBits>512</algorithmBits>
     </configuration>
@@ -249,7 +252,7 @@ The build fails with a `MojoExecutionException`.
 
 ## Requirements
 
-* Maven 3.6.3+
+* Maven 3.9.14+
 * JDK 11+
 
 ## Building From Source
