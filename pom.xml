@@ -51,7 +51,7 @@
         <maven.compiler.release>${java.version}</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <maven.api.version>3.8.1</maven.api.version>
+        <maven.api.version>3.9.14</maven.api.version>
         <maven.plugin.tools.version>3.14.0</maven.plugin.tools.version>
         <junit5.version>5.11.4</junit5.version>
         <mockito.version>5.14.2</mockito.version>
