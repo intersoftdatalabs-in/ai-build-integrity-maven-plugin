@@ -204,6 +204,53 @@ class HashVerifyMojoTest {
       // When/Then
       assertDoesNotThrow(() -> mojo.execute());
     }
+
+    @Test
+    @DisplayName("should fail when hash file exceeds max size (8 KiB)")
+    void shouldFailWhenHashFileTooLarge() throws Exception {
+      // Given
+      Path mdFile = tempDir.resolve("AGENTS.md");
+      Files.writeString(mdFile, "content");
+      // Create a hash file larger than 8 KiB
+      StringBuilder oversized = new StringBuilder();
+      for (int i = 0; i < 9000; i++) {
+        oversized.append('a');
+      }
+      Files.writeString(tempDir.resolve("AGENTS.md.sha256"), oversized.toString());
+
+      // When/Then
+      MojoExecutionException ex = assertThrows(MojoExecutionException.class, () -> mojo.execute());
+      assertTrue(ex.getMessage().contains("FAILED"));
+    }
+
+    @Test
+    @DisplayName("should fail when filename in hash file does not match source file")
+    void shouldFailWhenFilenameMismatch() throws Exception {
+      // Given
+      Path mdFile = tempDir.resolve("AGENTS.md");
+      Files.writeString(mdFile, "content");
+      String hash = HashUtils.computeHash(mdFile, "SHA-256");
+      // Write hash file with wrong filename
+      Files.writeString(tempDir.resolve("AGENTS.md.sha256"), hash + "  WRONG_FILE.md\n");
+
+      // When/Then
+      MojoExecutionException ex = assertThrows(MojoExecutionException.class, () -> mojo.execute());
+      assertTrue(ex.getMessage().contains("FAILED"));
+    }
+
+    @Test
+    @DisplayName("should pass when hash file contains hash only (no filename)")
+    void shouldPassWhenHashOnlyFormat() throws Exception {
+      // Given
+      Path mdFile = tempDir.resolve("AGENTS.md");
+      Files.writeString(mdFile, "content");
+      String hash = HashUtils.computeHash(mdFile, "SHA-256");
+      // Hash-only format (no embedded filename)
+      Files.writeString(tempDir.resolve("AGENTS.md.sha256"), hash + "\n");
+
+      // When/Then
+      assertDoesNotThrow(() -> mojo.execute());
+    }
   }
 
   private static void setField(Object target, String fieldName, Object value) throws Exception {

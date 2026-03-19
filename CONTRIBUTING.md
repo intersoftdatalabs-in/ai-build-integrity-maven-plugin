@@ -22,13 +22,11 @@ All contributors are expected to follow our standard Code of Conduct (be kind, b
    ```bash
    mvn spotless:apply
    ```
-
 4. Run all tests to ensure no regressions:
 
    ```bash
    mvn clean test
    ```
-
 5. Commit your changes with descriptive commit messages.
 6. Push your branch to your fork and open a Pull Request.
 
@@ -44,6 +42,181 @@ All contributors are expected to follow our standard Code of Conduct (be kind, b
 - **Java**: JDK 11 or newer is required.
 - **Maven**: 3.9.14 or newer is required.
 - **Formatting**: We use the [Google Java Style Guide](https://google.github.io/styleguide/javaguide.html). This is enforced by the `spotless-maven-plugin`.
+
+## Releasing to Maven Central
+
+This section documents the full release process for maintainers.
+
+### Prerequisites
+
+Before your first release, ensure you have:
+
+1. **GPG key** — a GPG key pair for signing artifacts. Your public key must be published to a
+   key server (e.g., `keys.openpgp.org` or `keyserver.ubuntu.com`).
+2. **Central Portal credentials** — a `<server>` entry in your `~/.m2/settings.xml` with
+   `<id>central</id>` and your Central Portal username/token.
+3. **GitHub push access** — permission to push tags and commits to `main`.
+
+Example `settings.xml` server entry:
+
+```xml
+<server>
+    <id>central</id>
+    <username>YOUR_CENTRAL_USERNAME</username>
+    <password>YOUR_CENTRAL_TOKEN</password>
+</server>
+```
+
+### Step 1 — Prepare the Release Version
+
+Update the POM version from `SNAPSHOT` to the release version:
+
+```bash
+mvn versions:set -DnewVersion=1.0.2
+```
+
+Update the version references in `README.md` code examples to match the new
+release version (replace `LATEST` with the actual version, e.g., `1.0.2`).
+
+Commit the version change:
+
+```bash
+git add pom.xml README.md
+git commit -m "Release 1.0.2"
+```
+
+### Step 2 — Build and Test Locally
+
+Run a full build with signing enabled to verify everything works before publishing:
+
+```bash
+mvn clean verify -Dsign=true
+```
+
+This will:
+
+- Compile and run all unit tests
+- Generate sources and javadoc JARs
+- Sign all artifacts with GPG
+- Run Spotless formatting checks
+
+Fix any issues before proceeding.
+
+### Step 3 — Deploy to Central (Staging)
+
+Deploy the signed artifacts to the Central Portal staging area:
+
+```bash
+mvn clean deploy -Dsign=true
+```
+
+Because `autoPublish` is set to `false`, this uploads the bundle to the Central Portal
+but does **not** publish it automatically.
+
+### Step 4 — Verify and Publish on Central Portal
+
+1. Go to [central.sonatype.com](https://central.sonatype.com) and log in.
+2. Navigate to your deployment/staging area.
+3. Review the staged bundle — verify the artifact contents, POM metadata, signatures, and
+   javadoc/sources JARs are all present.
+4. Click **Publish** to release the artifact to Maven Central.
+
+> **Note:** Once published, a release **cannot be undone**. Central artifacts are permanent.
+
+### Step 5 — Tag and Prepare Next Development Iteration
+
+After successful publishing, tag the release and bump to the next SNAPSHOT:
+
+```bash
+git tag v1.0.2
+git push origin main --tags
+
+mvn versions:set -DnewVersion=1.0.3-SNAPSHOT
+```
+
+Revert the `README.md` version references back to `LATEST`:
+
+```bash
+git add pom.xml README.md
+git commit -m "Prepare next development iteration 1.0.3-SNAPSHOT"
+git push origin main
+```
+
+### Using the Maven Release Plugin (Alternative)
+
+Instead of manual version management, you can use the Maven Release Plugin:
+
+```bash
+mvn release:prepare -Dsign=true
+mvn release:perform -Dsign=true
+```
+
+This will automatically:
+
+- Strip `-SNAPSHOT` from the version
+- Commit and tag the release
+- Deploy to Central
+- Bump to the next SNAPSHOT version
+
+Remember to still verify and manually publish on the Central Portal since `autoPublish` is
+`false`.
+
+## Publishing the Site to GitHub Pages
+
+The project uses the Maven Site Plugin to generate documentation including plugin goal
+descriptions, configuration properties, and project reports.
+
+### Prerequisites
+
+1. **GitHub Pages enabled** — go to **Settings → Pages** in the repository and set the
+   source to **"Deploy from a branch"** with the `gh-pages` branch selected.
+2. The `gh-pages` branch must exist. Create it if needed:
+
+   ```bash
+   git checkout --orphan gh-pages
+   git rm -rf .
+   git commit --allow-empty -m "Initialize gh-pages"
+   git push origin gh-pages
+   git checkout main
+   ```
+
+### Step 1 — Generate the Site
+
+Build the site locally to verify it renders correctly:
+
+```bash
+mvn clean site
+```
+
+The generated site will be in `target/site/`. Open `target/site/index.html` in a browser to
+review.
+
+### Step 2 — Deploy to GitHub Pages
+
+Push the site contents to the `gh-pages` branch manually:
+
+```bash
+SITE_DIR=$(mktemp -d)
+cp -r target/site/* "$SITE_DIR"
+git checkout gh-pages
+rm -rf *
+cp -r "$SITE_DIR"/* .
+git add -A
+git commit -m "Update site for version 1.0.2"
+git push origin gh-pages
+git checkout main
+rm -rf "$SITE_DIR"
+```
+
+After pushing, the site will be available at:
+`https://intersoftdatalabs-in.github.io/ai-build-integrity-maven-plugin/`
+
+### When to Publish
+
+- **After each release** — update the site to reflect the latest version's plugin
+  documentation and reports.
+- **After significant documentation changes** — if you update `src/site/markdown/` content
+  on `main`, regenerate and redeploy the site.
 
 ## License
 
