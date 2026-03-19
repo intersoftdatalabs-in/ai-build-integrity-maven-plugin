@@ -12,3 +12,5 @@ updates:
     ignore:
       - dependency-name: "org.junit.jupiter:*"
         versions: [">= 6"]
+      - dependency-name: "com.diffplug.spotless:spotless-maven-plugin"
+        versions: ["> 2.46.1"]
