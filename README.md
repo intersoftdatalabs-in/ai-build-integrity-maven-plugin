@@ -32,6 +32,12 @@ This ensures supply-chain integrity for AI instructions throughout the build lif
 
 ## Quick Start
 
+Choose the lifecycle placement based on whether your build rewrites protected files such as `AGENTS.md`, `SKILL.md`, or other matched instruction files.
+
+### If Your Build Does Not Rewrite Protected Files
+
+Use this setup when your build only reads instruction files, or when tools like Spotless run in check-only mode and do not modify matched files.
+
 ### Single-Module Project
 
 ```xml
@@ -91,6 +97,61 @@ Add to the parent POM's `<build><plugins>` section. Each child module will autom
 </plugin>
 ```
 
+### If Your Build Uses Formatters or Other File-Mutating Plugins
+
+Use this setup when a formatter or any other plugin rewrites files matched by `ai.integrity.includes`. The key rule is simple: run all mutating plugins first, then run `generate-hashes` against the final file bytes, then run `verify-hashes` later in the lifecycle.
+
+Common examples of mutating plugins include Spotless `apply`, license-header plugins, templating steps, or custom generators that rewrite Markdown or prompt files.
+
+```xml
+<build>
+    <plugins>
+        <plugin>
+            <groupId>com.diffplug.spotless</groupId>
+            <artifactId>spotless-maven-plugin</artifactId>
+            <version>2.43.0</version>
+            <executions>
+                <execution>
+                    <id>format-instructions</id>
+                    <phase>process-sources</phase>
+                    <goals>
+                        <goal>apply</goal>
+                    </goals>
+                </execution>
+            </executions>
+        </plugin>
+
+        <plugin>
+            <groupId>com.intsof</groupId>
+            <artifactId>ai-build-integrity-maven-plugin</artifactId>
+            <version>1.0.0-SNAPSHOT</version>
+            <executions>
+                <execution>
+                    <id>generate-hashes</id>
+                    <phase>process-sources</phase>
+                    <goals>
+                        <goal>generate-hashes</goal>
+                    </goals>
+                </execution>
+                <execution>
+                    <id>verify-hashes</id>
+                    <phase>test</phase>
+                    <goals>
+                        <goal>verify-hashes</goal>
+                    </goals>
+                </execution>
+            </executions>
+        </plugin>
+    </plugins>
+</build>
+```
+
+Important ordering notes:
+
+* If a formatter rewrites protected files, declare that plugin before `ai-build-integrity-maven-plugin` when both are bound to the same phase.
+* If you are unsure about plugin ordering in the same phase, move `generate-hashes` to a later phase after all file mutation is complete.
+* `spotless:check` is safe with the earlier setup because it validates formatting without rewriting files.
+
 ### Using SHA-512
 
 ```xml
@@ -106,6 +167,17 @@ Add to the parent POM's `<build><plugins>` section. Each child module will autom
 ```
 
 Or via command line: `-Dai.integrity.algorithm.bits=512`
+
+## Lifecycle Guidance
+
+This plugin always hashes the exact file bytes on disk. It does not normalize line endings, whitespace, or formatter output.
+
+Use these rules when choosing phases:
+
+* No build-time file mutation of protected files: bind `generate-hashes` early, such as `initialize`.
+* Build-time file mutation of protected files: bind `generate-hashes` only after all such mutations are complete.
+* Bind `verify-hashes` after `generate-hashes`, typically in `test` or `verify`.
+* If verification fails after adding a formatter, first check whether a later plugin is still rewriting protected files.
 
 ## Goals
 
