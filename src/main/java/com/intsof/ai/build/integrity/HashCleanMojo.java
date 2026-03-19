@@ -55,6 +55,10 @@ public class HashCleanMojo extends AbstractMojo {
   @Parameter(defaultValue = "${project}", readonly = true, required = true)
   private MavenProject project;
 
+  /** If true, the mojo will only execute in the reactor's execution root project. */
+  @Parameter(property = "ai.integrity.executionRootOnly", defaultValue = "false")
+  private boolean executionRootOnly;
+
   /**
    * Hash algorithm bit width. This is used to derive the default output extension if {@code
    * outputExtension} is set to "auto".
@@ -79,6 +83,11 @@ public class HashCleanMojo extends AbstractMojo {
 
   @Override
   public void execute() throws MojoExecutionException {
+    if (executionRootOnly && !project.isExecutionRoot()) {
+      getLog().info("Skipping HashCleanMojo execution in non-root project.");
+      return;
+    }
+
     String ext = resolveExtension();
     Path basePath = resolveBasePath();
 

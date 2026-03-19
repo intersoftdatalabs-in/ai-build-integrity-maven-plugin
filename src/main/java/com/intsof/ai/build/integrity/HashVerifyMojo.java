@@ -65,6 +65,10 @@ public class HashVerifyMojo extends AbstractMojo {
   @Parameter(defaultValue = "${project}", readonly = true, required = true)
   private MavenProject project;
 
+  /** If true, the mojo will only execute in the reactor's execution root project. */
+  @Parameter(property = "ai.integrity.executionRootOnly", defaultValue = "false")
+  private boolean executionRootOnly;
+
   /** Hash algorithm bit width. Must match what was used during generation. */
   @Parameter(defaultValue = "256", property = "ai.integrity.algorithm.bits")
   private int algorithmBits;
@@ -86,6 +90,11 @@ public class HashVerifyMojo extends AbstractMojo {
 
   @Override
   public void execute() throws MojoExecutionException {
+    if (executionRootOnly && !project.isExecutionRoot()) {
+      getLog().info("Skipping HashVerifyMojo execution in non-root project.");
+      return;
+    }
+
     String algorithm = HashUtils.resolveAlgorithm(algorithmBits);
     String ext = resolveExtension();
 

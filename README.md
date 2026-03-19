@@ -30,7 +30,7 @@ This ensures supply-chain integrity for AI instructions throughout the build lif
 ```xml
 <groupId>com.intsof</groupId>
 <artifactId>ai-build-integrity-maven-plugin</artifactId>
-<version>LATEST</version>
+<version>0.1.4-SNAPSHOT</version>
 ```
 
 ## Quick Start
@@ -49,7 +49,7 @@ Use this setup when your build only reads instruction files, or when tools like 
         <plugin>
             <groupId>com.intsof</groupId>
             <artifactId>ai-build-integrity-maven-plugin</artifactId>
-            <version>LATEST</version>
+            <version>0.1.4-SNAPSHOT</version>
             <executions>
                 <execution>
                     <id>generate-hashes</id>
@@ -80,14 +80,14 @@ Use this setup when your build only reads instruction files, or when tools like 
 
 ### Monorepo (Parent POM)
 
-Add to the parent POM's `<build><plugins>` section. Each child module will automatically generate and verify hashes within its own `${project.basedir}`:
+Add to the parent POM's `<build><plugins>` section. The parent project will secure the entire repository at T=0 by generating the hashes across all modules. As the long-running reactor build progresses, the child modules will continually verify those hashes to ensure files were not tampered with mid-build:
 
 ```xml
 <!-- In the parent pom.xml <build><plugins> section -->
 <plugin>
     <groupId>com.intsof</groupId>
     <artifactId>ai-build-integrity-maven-plugin</artifactId>
-    <version>LATEST</version>
+    <version>0.1.4-SNAPSHOT</version>
     <executions>
         <execution>
             <id>generate-hashes</id>
@@ -95,6 +95,10 @@ Add to the parent POM's `<build><plugins>` section. Each child module will autom
             <goals>
                 <goal>generate-hashes</goal>
             </goals>
+            <configuration>
+                <!-- Generates hashes for the entire repository ONLY at the root at T=0 -->
+                <executionRootOnly>true</executionRootOnly>
+            </configuration>
         </execution>
         <execution>
             <id>verify-hashes</id>
@@ -102,6 +106,21 @@ Add to the parent POM's `<build><plugins>` section. Each child module will autom
             <goals>
                 <goal>verify-hashes</goal>
             </goals>
+            <configuration>
+                <!-- Runs locally in every child module to continually ensure hashes didn't change -->
+                <executionRootOnly>false</executionRootOnly>
+            </configuration>
+        </execution>
+        <execution>
+            <id>clean-hashes</id>
+            <phase>clean</phase>
+            <goals>
+                <goal>clean-hashes</goal>
+            </goals>
+            <configuration>
+                <!-- Cleans the ENTIRE repository hashes only once at the root -->
+                <executionRootOnly>true</executionRootOnly>
+            </configuration>
         </execution>
     </executions>
 </plugin>
@@ -134,7 +153,7 @@ Common examples of mutating plugins include Spotless `apply`, license-header plu
         <plugin>
             <groupId>com.intsof</groupId>
             <artifactId>ai-build-integrity-maven-plugin</artifactId>
-            <version>LATEST</version>
+            <version>0.1.4-SNAPSHOT</version>
             <executions>
                 <execution>
                     <id>generate-hashes</id>
@@ -175,7 +194,7 @@ Important ordering notes:
 <plugin>
     <groupId>com.intsof</groupId>
     <artifactId>ai-build-integrity-maven-plugin</artifactId>
-    <version>LATEST</version>
+    <version>0.1.4-SNAPSHOT</version>
     <configuration>
         <algorithmBits>512</algorithmBits>
     </configuration>
@@ -220,15 +239,16 @@ Walks the project base directory and automatically removes all generated hash si
 
 ## Configuration Properties
 
-|            Property            |                Default                |                                Description                                 |
-|--------------------------------|---------------------------------------|----------------------------------------------------------------------------|
-| `ai.integrity.algorithm.bits`  | `256`                                 | Hash algorithm bit width: `256`, `384`, or `512`                           |
-| `ai.integrity.includes`        | `**/*.md`                             | Comma-separated glob patterns for files to hash                            |
-| `ai.integrity.excludes`        | `**/*.sha256,**/*.sha384,**/*.sha512` | Comma-separated glob patterns for files to exclude                         |
-| `ai.integrity.baseDir`         | `${project.basedir}`                  | Base directory to scan                                                     |
-| `ai.integrity.outputExtension` | `auto`                                | Sidecar file extension. `auto` derives from algorithmBits (e.g. `.sha256`) |
-| `ai.integrity.skipExisting`    | `false`                               | Skip generating hashes for files that already have a sidecar               |
-| `ai.integrity.skipDirs`        | `target,.git,node_modules,.tmp`       | Comma-separated directory names to skip during traversal                   |
+|             Property             |                Default                |                                Description                                 |
+|----------------------------------|---------------------------------------|----------------------------------------------------------------------------|
+| `ai.integrity.algorithm.bits`    | `256`                                 | Hash algorithm bit width: `256`, `384`, or `512`                           |
+| `ai.integrity.includes`          | `**/*.md`                             | Comma-separated glob patterns for files to hash                            |
+| `ai.integrity.excludes`          | `**/*.sha256,**/*.sha384,**/*.sha512` | Comma-separated glob patterns for files to exclude                         |
+| `ai.integrity.baseDir`           | `${project.basedir}`                  | Base directory to scan                                                     |
+| `ai.integrity.outputExtension`   | `auto`                                | Sidecar file extension. `auto` derives from algorithmBits (e.g. `.sha256`) |
+| `ai.integrity.skipExisting`      | `false`                               | Skip generating hashes for files that already have a sidecar               |
+| `ai.integrity.skipDirs`          | `target,.git,node_modules,.tmp`       | Comma-separated directory names to skip during traversal                   |
+| `ai.integrity.executionRootOnly` | `false`                               | If true, the mojo only executes in the reactor's execution root project    |
 
 ## Example Output
 
@@ -268,7 +288,7 @@ The build fails with a `MojoExecutionException`.
 * **Directory traversal:** `Files.walkFileTree` with `SKIP_SUBTREE` pruning — one syscall per directory, no intermediate `List<Path>` allocation for the tree walk.
 * **Hash computation:** 64 KiB streaming buffer minimizes syscalls while keeping heap pressure low.
 * **Hex encoding:** Lookup-table encoder (~10x faster than `String.format("%02x")` per byte).
-* **Monorepo behavior:** Each module scans only its own `basedir`, so a 200-module reactor does 200 small focused walks rather than one giant walk.
+* **Monorepo behavior:** In a secure Monorepo setup, the parent module performs one incredibly fast, global `Files.walkFileTree` at T=0 to generate all hashes securely. Then, each of the 200 child modules performs small focused walks during their own `test` phases to continuously verify local integrity.
 
 ## Requirements
 

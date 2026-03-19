@@ -30,6 +30,13 @@ Use this setup when your build only reads instruction files, or when tools like 
                         <goal>verify-hashes</goal>
                     </goals>
                 </execution>
+                <execution>
+                    <id>clean-hashes</id>
+                    <phase>clean</phase>
+                    <goals>
+                        <goal>clean-hashes</goal>
+                    </goals>
+                </execution>
             </executions>
         </plugin>
     </plugins>
@@ -52,6 +59,10 @@ Add to the parent POM's `<build><plugins>` section. Each child module will autom
             <goals>
                 <goal>generate-hashes</goal>
             </goals>
+            <configuration>
+                <!-- Generates hashes for the entire repository ONLY at the root at T=0 -->
+                <executionRootOnly>true</executionRootOnly>
+            </configuration>
         </execution>
         <execution>
             <id>verify-hashes</id>
@@ -59,6 +70,21 @@ Add to the parent POM's `<build><plugins>` section. Each child module will autom
             <goals>
                 <goal>verify-hashes</goal>
             </goals>
+            <configuration>
+                <!-- Runs locally in every child module to continually ensure hashes didn't change -->
+                <executionRootOnly>false</executionRootOnly>
+            </configuration>
+        </execution>
+        <execution>
+            <id>clean-hashes</id>
+            <phase>clean</phase>
+            <goals>
+                <goal>clean-hashes</goal>
+            </goals>
+            <configuration>
+                <!-- Cleans the ENTIRE repository hashes only once at the root -->
+                <executionRootOnly>true</executionRootOnly>
+            </configuration>
         </execution>
     </executions>
 </plugin>
@@ -107,6 +133,13 @@ Common examples of mutating plugins include Spotless `apply`, license-header plu
                         <goal>verify-hashes</goal>
                     </goals>
                 </execution>
+                <execution>
+                    <id>clean-hashes</id>
+                    <phase>clean</phase>
+                    <goals>
+                        <goal>clean-hashes</goal>
+                    </goals>
+                </execution>
             </executions>
         </plugin>
     </plugins>
@@ -124,4 +157,5 @@ Common examples of mutating plugins include Spotless `apply`, license-header plu
 | `ai.integrity.outputExtension` | `auto`                                | Sidecar file extension. `auto` derives from algorithmBits    |
 | `ai.integrity.skipExisting`    | `false`                               | Skip generating hashes for files that already have a sidecar |
 | `ai.integrity.skipDirs`        | `target,.git,node_modules,.tmp`       | Comma-separated directory names to skip                      |
+| `ai.integrity.executionRootOnly`| `false`                              | If true, the mojo only executes in the reactor's root project|
 
