@@ -82,8 +82,7 @@ class HashVerifyMojoTest {
           "0000000000000000000000000000000000000000000000000000000000000000  AGENTS.md\n");
 
       // When/Then
-      MojoExecutionException ex =
-          assertThrows(MojoExecutionException.class, () -> mojo.execute());
+      MojoExecutionException ex = assertThrows(MojoExecutionException.class, () -> mojo.execute());
       assertTrue(ex.getMessage().contains("FAILED"));
       assertTrue(ex.getMessage().contains("tampered"));
     }
@@ -95,8 +94,7 @@ class HashVerifyMojoTest {
       Files.writeString(tempDir.resolve("MISSING.md.sha256"), "somehash  MISSING.md\n");
 
       // When/Then
-      MojoExecutionException ex =
-          assertThrows(MojoExecutionException.class, () -> mojo.execute());
+      MojoExecutionException ex = assertThrows(MojoExecutionException.class, () -> mojo.execute());
       assertTrue(ex.getMessage().contains("FAILED"));
     }
 
@@ -145,8 +143,7 @@ class HashVerifyMojoTest {
       Files.writeString(skillFile, "Tampered content");
 
       // When/Then
-      MojoExecutionException ex =
-          assertThrows(MojoExecutionException.class, () -> mojo.execute());
+      MojoExecutionException ex = assertThrows(MojoExecutionException.class, () -> mojo.execute());
       assertTrue(ex.getMessage().contains("FAILED"));
     }
 

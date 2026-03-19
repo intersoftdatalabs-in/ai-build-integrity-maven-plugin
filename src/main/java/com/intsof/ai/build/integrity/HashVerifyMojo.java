@@ -41,9 +41,9 @@ import org.apache.maven.project.MavenProject;
  * Verifies that AI instruction resource files have not been modified since their hashes were
  * generated.
  *
- * <p>This mojo finds all companion hash sidecar files under the base directory using NIO
- * {@link Files#walkFileTree}, recomputes the hash of the corresponding source file, and compares
- * the two. If any mismatch is detected, the build fails with a {@link MojoExecutionException}.
+ * <p>This mojo finds all companion hash sidecar files under the base directory using NIO {@link
+ * Files#walkFileTree}, recomputes the hash of the corresponding source file, and compares the two.
+ * If any mismatch is detected, the build fails with a {@link MojoExecutionException}.
  *
  * <p><b>Security rationale:</b> AI agent instructions must not change once a build has begun or
  * after the artifact is shipped. This verification step ensures that no instruction file has been
@@ -55,6 +55,7 @@ import org.apache.maven.project.MavenProject;
 @Mojo(name = "verify-hashes", defaultPhase = LifecyclePhase.TEST, requiresProject = true)
 public class HashVerifyMojo extends AbstractMojo {
 
+  /** Current Maven project instance. */
   @Parameter(defaultValue = "${project}", readonly = true, required = true)
   private MavenProject project;
 
@@ -62,11 +63,14 @@ public class HashVerifyMojo extends AbstractMojo {
   @Parameter(defaultValue = "256", property = "ai.integrity.algorithm.bits")
   private int algorithmBits;
 
+  /** Base directory to scan; defaults to {@code ${project.basedir}}. */
   @Parameter(property = "ai.integrity.baseDir", defaultValue = "${project.basedir}")
   private String baseDir;
 
-  /** Output extension for hash sidecar files. When set to {@code "auto"} (the default), the
-   *  extension is derived from {@code algorithmBits} (e.g. {@code .sha256}). */
+  /**
+   * Output extension for hash sidecar files. When set to {@code "auto"} (the default), the
+   * extension is derived from {@code algorithmBits} (e.g. {@code .sha256}).
+   */
   @Parameter(property = "ai.integrity.outputExtension", defaultValue = "auto")
   private String outputExtension;
 
@@ -166,12 +170,15 @@ public class HashVerifyMojo extends AbstractMojo {
 
     if (failed > 0) {
       throw new MojoExecutionException(
-          "Hash verification FAILED: "
-              + failed
-              + " file(s) have been modified or tampered with!");
+          "Hash verification FAILED: " + failed + " file(s) have been modified or tampered with!");
     }
   }
 
+  /**
+   * Resolves the hash file extension based on configuration.
+   *
+   * @return the resolved extension (e.g. ".sha256")
+   */
   private String resolveExtension() {
     if (outputExtension == null || "auto".equals(outputExtension)) {
       return HashUtils.extensionForBits(algorithmBits);
@@ -179,6 +186,11 @@ public class HashVerifyMojo extends AbstractMojo {
     return outputExtension;
   }
 
+  /**
+   * Resolves the absolute path of the base directory to scan.
+   *
+   * @return the resolved path instance
+   */
   private Path resolveBasePath() {
     if (baseDir != null && !baseDir.isEmpty()) {
       return Paths.get(baseDir);
@@ -186,6 +198,11 @@ public class HashVerifyMojo extends AbstractMojo {
     return project.getBasedir().toPath();
   }
 
+  /**
+   * Parses the skipDirs property into a set of unique directory names.
+   *
+   * @return a set of directory names to prune during traversal
+   */
   private Set<String> parseSkipDirs() {
     Set<String> result = new HashSet<>();
     if (skipDirs != null) {
@@ -199,7 +216,13 @@ public class HashVerifyMojo extends AbstractMojo {
     return result;
   }
 
-  /** Build matchers for hash sidecar files, including root-level variant. */
+  /**
+   * Builds NIO {@link PathMatcher}s for hash sidecar files.
+   *
+   * @param basePath the base directory to provide the filesystem
+   * @param ext the hash file extension to match (e.g. ".sha256")
+   * @return a list of compiled matchers
+   */
   private List<PathMatcher> buildHashMatchers(Path basePath, String ext) {
     FileSystem fs = basePath.getFileSystem();
     List<PathMatcher> matchers = new ArrayList<>();
@@ -208,6 +231,13 @@ public class HashVerifyMojo extends AbstractMojo {
     return matchers;
   }
 
+  /**
+   * Tests if the relative path matches any of the provided matchers.
+   *
+   * @param path the path to check
+   * @param matchers the compile glob matchers
+   * @return {@code true} if any matcher matches the path
+   */
   private static boolean matchesAny(Path path, List<PathMatcher> matchers) {
     for (PathMatcher m : matchers) {
       if (m.matches(path)) {

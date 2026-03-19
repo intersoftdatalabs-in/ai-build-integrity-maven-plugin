@@ -94,8 +94,7 @@ class HashUtilsTest {
       String hash = HashUtils.computeHash(file, "SHA-256");
 
       // Then
-      assertEquals(
-          "dffd6021bb2bd5b0af676290809ec3a53191dd81c7f70a4b28688a362182986f", hash);
+      assertEquals("dffd6021bb2bd5b0af676290809ec3a53191dd81c7f70a4b28688a362182986f", hash);
     }
 
     @Test
@@ -128,16 +127,14 @@ class HashUtilsTest {
 
     @Test
     @DisplayName("should produce same hash for identical content")
-    void shouldProduceSameHashForIdenticalContent()
-        throws IOException, NoSuchAlgorithmException {
+    void shouldProduceSameHashForIdenticalContent() throws IOException, NoSuchAlgorithmException {
       Path file1 = tempDir.resolve("file1.md");
       Path file2 = tempDir.resolve("file2.md");
       Files.writeString(file1, "Same content");
       Files.writeString(file2, "Same content");
 
       assertEquals(
-          HashUtils.computeHash(file1, "SHA-256"),
-          HashUtils.computeHash(file2, "SHA-256"));
+          HashUtils.computeHash(file1, "SHA-256"), HashUtils.computeHash(file2, "SHA-256"));
     }
 
     @Test
@@ -158,8 +155,7 @@ class HashUtilsTest {
       Files.writeString(file, "content");
 
       assertThrows(
-          NoSuchAlgorithmException.class,
-          () -> HashUtils.computeHash(file, "SHA-INVALID"));
+          NoSuchAlgorithmException.class, () -> HashUtils.computeHash(file, "SHA-INVALID"));
     }
 
     @Test
@@ -205,16 +201,13 @@ class HashUtilsTest {
     @DisplayName("should trim whitespace from patterns")
     void shouldTrimWhitespace() {
       assertEquals(
-          Set.of("**/*.md", "**/*.txt"),
-          HashUtils.parsePatterns("  **/*.md , **/*.txt  "));
+          Set.of("**/*.md", "**/*.txt"), HashUtils.parsePatterns("  **/*.md , **/*.txt  "));
     }
 
     @Test
     @DisplayName("should skip empty entries from double commas")
     void shouldSkipEmptyEntries() {
-      assertEquals(
-          Set.of("**/*.md", "**/*.txt"),
-          HashUtils.parsePatterns("**/*.md,,**/*.txt"));
+      assertEquals(Set.of("**/*.md", "**/*.txt"), HashUtils.parsePatterns("**/*.md,,**/*.txt"));
     }
   }
 

@@ -56,28 +56,39 @@ import org.apache.maven.project.MavenProject;
 @Mojo(name = "generate-hashes", defaultPhase = LifecyclePhase.VALIDATE, requiresProject = true)
 public class HashGeneratorMojo extends AbstractMojo {
 
+  /** Current Maven project instance. */
   @Parameter(defaultValue = "${project}", readonly = true, required = true)
   private MavenProject project;
 
-  /** Hash algorithm bit width. Determines both the algorithm (SHA-256, SHA-384, SHA-512) and the
-   *  default output extension (.sha256, .sha384, .sha512). */
+  /**
+   * Hash algorithm bit width. Determines both the algorithm (SHA-256, SHA-384, SHA-512) and the
+   * default output extension (.sha256, .sha384, .sha512).
+   */
   @Parameter(defaultValue = "256", property = "ai.integrity.algorithm.bits")
   private int algorithmBits;
 
+  /** Comma-separated glob patterns for resource files to hash (e.g. {@code ** /*.md}). */
   @Parameter(property = "ai.integrity.includes", defaultValue = "**/*.md")
   private String includes;
 
-  @Parameter(property = "ai.integrity.excludes", defaultValue = "**/*.sha256,**/*.sha384,**/*.sha512")
+  /** Comma-separated glob patterns for files to strictly exclude from hashing. */
+  @Parameter(
+      property = "ai.integrity.excludes",
+      defaultValue = "**/*.sha256,**/*.sha384,**/*.sha512")
   private String excludes;
 
+  /** Base directory to scan; defaults to {@code ${project.basedir}}. */
   @Parameter(property = "ai.integrity.baseDir", defaultValue = "${project.basedir}")
   private String baseDir;
 
-  /** Output extension for hash sidecar files. When set to {@code "auto"} (the default), the
-   *  extension is derived from {@code algorithmBits} (e.g. {@code .sha256}). */
+  /**
+   * Output extension for hash sidecar files. When set to {@code "auto"} (the default), the
+   * extension is derived from {@code algorithmBits} (e.g. {@code .sha256}).
+   */
   @Parameter(property = "ai.integrity.outputExtension", defaultValue = "auto")
   private String outputExtension;
 
+  /** If {@code true}, skip generating hashes for files that already have a sidecar file. */
   @Parameter(property = "ai.integrity.skipExisting", defaultValue = "false")
   private boolean skipExisting;
 
@@ -168,6 +179,11 @@ public class HashGeneratorMojo extends AbstractMojo {
     getLog().info("Hash generation complete: " + hashed + " created, " + skipped + " skipped.");
   }
 
+  /**
+   * Resolves the hash file extension based on configuration.
+   *
+   * @return the resolved extension (e.g. ".sha256")
+   */
   private String resolveExtension() {
     if (outputExtension == null || "auto".equals(outputExtension)) {
       return HashUtils.extensionForBits(algorithmBits);
@@ -175,6 +191,11 @@ public class HashGeneratorMojo extends AbstractMojo {
     return outputExtension;
   }
 
+  /**
+   * Resolves the absolute path of the base directory to scan.
+   *
+   * @return the resolved path instance
+   */
   private Path resolveBasePath() {
     if (baseDir != null && !baseDir.isEmpty()) {
       return Paths.get(baseDir);
@@ -182,6 +203,11 @@ public class HashGeneratorMojo extends AbstractMojo {
     return project.getBasedir().toPath();
   }
 
+  /**
+   * Parses the skipDirs property into a set of unique directory names.
+   *
+   * @return a set of directory names to prune during traversal
+   */
   private Set<String> parseSkipDirs() {
     Set<String> result = new HashSet<>();
     if (skipDirs != null) {
@@ -196,8 +222,13 @@ public class HashGeneratorMojo extends AbstractMojo {
   }
 
   /**
-   * Builds PathMatchers for both deep ({@code ** /...}) and root-level variants. Java's glob
-   * {@code ** /*.md} does not match {@code AGENTS.md} at the root, so we add the root variant.
+   * Builds NIO {@link PathMatcher}s for the given glob patterns. To support patterns like {@code **
+   * /*.md} matching root files consistently, this method expands such patterns to include their
+   * base variants.
+   *
+   * @param basePath the base directory to provide the filesystem
+   * @param patterns the glob patterns to convert
+   * @return a list of compiled matchers
    */
   private List<PathMatcher> buildMatchers(Path basePath, Set<String> patterns) {
     FileSystem fs = basePath.getFileSystem();
@@ -211,6 +242,13 @@ public class HashGeneratorMojo extends AbstractMojo {
     return matchers;
   }
 
+  /**
+   * Tests if the relative path matches any of the provided matchers.
+   *
+   * @param path the path to check
+   * @param matchers the compile glob matchers
+   * @return {@code true} if any matcher matches the path
+   */
   private static boolean matchesAny(Path path, List<PathMatcher> matchers) {
     for (PathMatcher m : matchers) {
       if (m.matches(path)) {
