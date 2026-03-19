@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intersoftdatalabs.ai.integrity;
+package com.intsof.ai.build.integrity;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -55,6 +55,29 @@ class HashUtilsTest {
   }
 
   @Nested
+  @DisplayName("extensionForBits")
+  class ExtensionForBitsTests {
+
+    @Test
+    @DisplayName("should return .sha256 for 256 bits")
+    void shouldReturnSha256Extension() {
+      assertEquals(".sha256", HashUtils.extensionForBits(256));
+    }
+
+    @Test
+    @DisplayName("should return .sha512 for 512 bits")
+    void shouldReturnSha512Extension() {
+      assertEquals(".sha512", HashUtils.extensionForBits(512));
+    }
+
+    @Test
+    @DisplayName("should return .sha384 for 384 bits")
+    void shouldReturnSha384Extension() {
+      assertEquals(".sha384", HashUtils.extensionForBits(384));
+    }
+  }
+
+  @Nested
   @DisplayName("computeHash")
   class ComputeHashTests {
 
@@ -63,16 +86,30 @@ class HashUtilsTest {
     @Test
     @DisplayName("should compute correct SHA-256 for known content")
     void shouldComputeCorrectSha256() throws IOException, NoSuchAlgorithmException {
-      // Given: a file with known content
+      // Given
       Path file = tempDir.resolve("test.md");
       Files.writeString(file, "Hello, World!");
 
-      // When: computing the hash
+      // When
       String hash = HashUtils.computeHash(file, "SHA-256");
 
-      // Then: the hash matches the known SHA-256 of "Hello, World!"
+      // Then
       assertEquals(
           "dffd6021bb2bd5b0af676290809ec3a53191dd81c7f70a4b28688a362182986f", hash);
+    }
+
+    @Test
+    @DisplayName("should compute correct SHA-512 for known content")
+    void shouldComputeCorrectSha512() throws IOException, NoSuchAlgorithmException {
+      // Given
+      Path file = tempDir.resolve("test.md");
+      Files.writeString(file, "Hello, World!");
+
+      // When
+      String hash = HashUtils.computeHash(file, "SHA-512");
+
+      // Then: SHA-512 produces 128 hex chars
+      assertEquals(128, hash.length());
     }
 
     @Test
@@ -98,10 +135,9 @@ class HashUtilsTest {
       Files.writeString(file1, "Same content");
       Files.writeString(file2, "Same content");
 
-      String hash1 = HashUtils.computeHash(file1, "SHA-256");
-      String hash2 = HashUtils.computeHash(file2, "SHA-256");
-
-      assertEquals(hash1, hash2);
+      assertEquals(
+          HashUtils.computeHash(file1, "SHA-256"),
+          HashUtils.computeHash(file2, "SHA-256"));
     }
 
     @Test
@@ -110,11 +146,9 @@ class HashUtilsTest {
       Path file = tempDir.resolve("empty.md");
       Files.writeString(file, "");
 
-      String hash = HashUtils.computeHash(file, "SHA-256");
-
-      // SHA-256 of empty input
       assertEquals(
-          "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", hash);
+          "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          HashUtils.computeHash(file, "SHA-256"));
     }
 
     @Test
@@ -144,43 +178,43 @@ class HashUtilsTest {
     @Test
     @DisplayName("should return empty set for null input")
     void shouldReturnEmptyForNull() {
-      Set<String> result = HashUtils.parsePatterns(null);
-      assertTrue(result.isEmpty());
+      assertTrue(HashUtils.parsePatterns(null).isEmpty());
     }
 
     @Test
     @DisplayName("should return empty set for empty string")
     void shouldReturnEmptyForEmptyString() {
-      Set<String> result = HashUtils.parsePatterns("");
-      assertTrue(result.isEmpty());
+      assertTrue(HashUtils.parsePatterns("").isEmpty());
     }
 
     @Test
     @DisplayName("should parse single pattern")
     void shouldParseSinglePattern() {
-      Set<String> result = HashUtils.parsePatterns("**/*.md");
-      assertEquals(Set.of("**/*.md"), result);
+      assertEquals(Set.of("**/*.md"), HashUtils.parsePatterns("**/*.md"));
     }
 
     @Test
     @DisplayName("should parse comma-separated patterns")
     void shouldParseCommaSeparatedPatterns() {
-      Set<String> result = HashUtils.parsePatterns("**/*.md,**/*.txt,**/*.yaml");
-      assertEquals(Set.of("**/*.md", "**/*.txt", "**/*.yaml"), result);
+      assertEquals(
+          Set.of("**/*.md", "**/*.txt", "**/*.yaml"),
+          HashUtils.parsePatterns("**/*.md,**/*.txt,**/*.yaml"));
     }
 
     @Test
     @DisplayName("should trim whitespace from patterns")
     void shouldTrimWhitespace() {
-      Set<String> result = HashUtils.parsePatterns("  **/*.md , **/*.txt  ");
-      assertEquals(Set.of("**/*.md", "**/*.txt"), result);
+      assertEquals(
+          Set.of("**/*.md", "**/*.txt"),
+          HashUtils.parsePatterns("  **/*.md , **/*.txt  "));
     }
 
     @Test
     @DisplayName("should skip empty entries from double commas")
     void shouldSkipEmptyEntries() {
-      Set<String> result = HashUtils.parsePatterns("**/*.md,,**/*.txt");
-      assertEquals(Set.of("**/*.md", "**/*.txt"), result);
+      assertEquals(
+          Set.of("**/*.md", "**/*.txt"),
+          HashUtils.parsePatterns("**/*.md,,**/*.txt"));
     }
   }
 
