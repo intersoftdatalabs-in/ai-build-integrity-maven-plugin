@@ -65,6 +65,13 @@ Use this setup when your build only reads instruction files, or when tools like 
                         <goal>verify-hashes</goal>
                     </goals>
                 </execution>
+                <execution>
+                    <id>clean-hashes</id>
+                    <phase>clean</phase>
+                    <goals>
+                        <goal>clean-hashes</goal>
+                    </goals>
+                </execution>
             </executions>
         </plugin>
     </plugins>
@@ -143,6 +150,13 @@ Common examples of mutating plugins include Spotless `apply`, license-header plu
                         <goal>verify-hashes</goal>
                     </goals>
                 </execution>
+                <execution>
+                    <id>clean-hashes</id>
+                    <phase>clean</phase>
+                    <goals>
+                        <goal>clean-hashes</goal>
+                    </goals>
+                </execution>
             </executions>
         </plugin>
     </plugins>
@@ -197,6 +211,12 @@ Walks the project base directory and generates companion hash sidecar files for 
 Finds all hash sidecar files, recomputes the hash of the corresponding source file, and **fails the build** if any mismatch is detected.
 
 * **Default phase:** `test`
+
+### `ai-build-integrity:clean-hashes`
+
+Walks the project base directory and automatically removes all generated hash sidecar files matching the configured output extension.
+
+* **Default phase:** `clean`
 
 ## Configuration Properties
 
