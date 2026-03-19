@@ -40,7 +40,7 @@ All contributors are expected to follow our standard Code of Conduct (be kind, b
 ## Development Environment
 
 - **Java**: JDK 11 or newer is required.
-- **Maven**: 3.9.14 or newer is required.
+- **Maven**: 3.9.x or newer is required.
 - **Formatting**: We use the [Google Java Style Guide](https://google.github.io/styleguide/javaguide.html). This is enforced by the `spotless-maven-plugin`.
 
 ## Releasing to Maven Central
