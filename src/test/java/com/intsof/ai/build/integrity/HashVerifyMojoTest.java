@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intersoftdatalabs.ai.integrity;
+package com.intsof.ai.build.integrity;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -39,9 +39,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class HashVerifyMojoTest {
 
   @Mock private MavenProject project;
-
   @Mock private Log log;
-
   @TempDir Path tempDir;
 
   private HashVerifyMojo mojo;
@@ -52,10 +50,9 @@ class HashVerifyMojoTest {
     mojo.setLog(log);
     setField(mojo, "project", project);
     setField(mojo, "algorithmBits", 256);
-    setField(mojo, "includes", "**/*.md");
-    setField(mojo, "excludes", "**/*.sha256");
     setField(mojo, "baseDir", tempDir.toString());
-    setField(mojo, "outputExtension", ".sha256");
+    setField(mojo, "outputExtension", "auto");
+    setField(mojo, "skipDirs", "target,.git,node_modules,.tmp");
   }
 
   @Nested
@@ -65,52 +62,48 @@ class HashVerifyMojoTest {
     @Test
     @DisplayName("should pass verification when hashes match")
     void shouldPassWhenHashesMatch() throws Exception {
-      // Given: a file and its correct hash
+      // Given
       Path mdFile = tempDir.resolve("AGENTS.md");
       Files.writeString(mdFile, "# AI Agent Instructions");
-
       String hash = HashUtils.computeHash(mdFile, "SHA-256");
-      Path hashFile = tempDir.resolve("AGENTS.md.sha256");
-      Files.writeString(hashFile, hash + "  AGENTS.md\n");
+      Files.writeString(tempDir.resolve("AGENTS.md.sha256"), hash + "  AGENTS.md\n");
 
-      // When/Then: verification passes
+      // When/Then
       assertDoesNotThrow(() -> mojo.execute());
     }
 
     @Test
     @DisplayName("should fail verification when hash does not match (tampered file)")
     void shouldFailWhenHashMismatch() throws Exception {
-      // Given: a file with a mismatched hash (simulating tampering)
-      Path mdFile = tempDir.resolve("AGENTS.md");
-      Files.writeString(mdFile, "# AI Agent Instructions");
+      // Given
+      Files.writeString(tempDir.resolve("AGENTS.md"), "# AI Agent Instructions");
+      Files.writeString(
+          tempDir.resolve("AGENTS.md.sha256"),
+          "0000000000000000000000000000000000000000000000000000000000000000  AGENTS.md\n");
 
-      Path hashFile = tempDir.resolve("AGENTS.md.sha256");
-      Files.writeString(hashFile, "0000000000000000000000000000000000000000000000000000000000000000  AGENTS.md\n");
-
-      // When/Then: verification fails
-      MojoExecutionException exception =
+      // When/Then
+      MojoExecutionException ex =
           assertThrows(MojoExecutionException.class, () -> mojo.execute());
-      assertTrue(exception.getMessage().contains("FAILED"));
-      assertTrue(exception.getMessage().contains("tampered"));
+      assertTrue(ex.getMessage().contains("FAILED"));
+      assertTrue(ex.getMessage().contains("tampered"));
     }
 
     @Test
     @DisplayName("should fail when source file is missing for a hash file")
     void shouldFailWhenSourceFileMissing() throws Exception {
-      // Given: a hash file without a corresponding source file
-      Path hashFile = tempDir.resolve("MISSING.md.sha256");
-      Files.writeString(hashFile, "somehash  MISSING.md\n");
+      // Given
+      Files.writeString(tempDir.resolve("MISSING.md.sha256"), "somehash  MISSING.md\n");
 
       // When/Then
-      MojoExecutionException exception =
+      MojoExecutionException ex =
           assertThrows(MojoExecutionException.class, () -> mojo.execute());
-      assertTrue(exception.getMessage().contains("FAILED"));
+      assertTrue(ex.getMessage().contains("FAILED"));
     }
 
     @Test
     @DisplayName("should warn and return when no hash files are found")
     void shouldWarnWhenNoHashFiles() throws Exception {
-      // Given: directory with .md files but no .sha256 files
+      // Given
       Files.writeString(tempDir.resolve("README.md"), "content");
 
       // When/Then
@@ -121,16 +114,17 @@ class HashVerifyMojoTest {
     @Test
     @DisplayName("should verify multiple files and report aggregate results")
     void shouldVerifyMultipleFiles() throws Exception {
-      // Given: multiple files with correct hashes
+      // Given
       Path file1 = tempDir.resolve("AGENTS.md");
       Path file2 = tempDir.resolve("SKILL.md");
       Files.writeString(file1, "Agent content");
       Files.writeString(file2, "Skill content");
-
-      String hash1 = HashUtils.computeHash(file1, "SHA-256");
-      String hash2 = HashUtils.computeHash(file2, "SHA-256");
-      Files.writeString(tempDir.resolve("AGENTS.md.sha256"), hash1 + "  AGENTS.md\n");
-      Files.writeString(tempDir.resolve("SKILL.md.sha256"), hash2 + "  SKILL.md\n");
+      Files.writeString(
+          tempDir.resolve("AGENTS.md.sha256"),
+          HashUtils.computeHash(file1, "SHA-256") + "  AGENTS.md\n");
+      Files.writeString(
+          tempDir.resolve("SKILL.md.sha256"),
+          HashUtils.computeHash(file2, "SHA-256") + "  SKILL.md\n");
 
       // When/Then
       assertDoesNotThrow(() -> mojo.execute());
@@ -139,22 +133,21 @@ class HashVerifyMojoTest {
     @Test
     @DisplayName("should detect tampering in nested directories")
     void shouldDetectTamperingInSubdirectories() throws Exception {
-      // Given: a nested file with a tampered hash
+      // Given
       Path subDir = tempDir.resolve("skills");
       Files.createDirectory(subDir);
       Path skillFile = subDir.resolve("SKILL.md");
       Files.writeString(skillFile, "Original content");
-
       String correctHash = HashUtils.computeHash(skillFile, "SHA-256");
       Files.writeString(subDir.resolve("SKILL.md.sha256"), correctHash + "  SKILL.md\n");
 
-      // Now tamper with the file
+      // Tamper
       Files.writeString(skillFile, "Tampered content");
 
-      // When/Then: verification detects the change
-      MojoExecutionException exception =
+      // When/Then
+      MojoExecutionException ex =
           assertThrows(MojoExecutionException.class, () -> mojo.execute());
-      assertTrue(exception.getMessage().contains("FAILED"));
+      assertTrue(ex.getMessage().contains("FAILED"));
     }
 
     @Test
@@ -171,20 +164,18 @@ class HashVerifyMojoTest {
     @Test
     @DisplayName("should skip target directories during verification")
     void shouldSkipTargetDirectories() throws Exception {
-      // Given: a hash file inside a target directory
+      // Given
       Path targetDir = tempDir.resolve("target");
       Files.createDirectory(targetDir);
       Files.writeString(targetDir.resolve("generated.md"), "generated");
-      Files.writeString(
-          targetDir.resolve("generated.md.sha256"), "badhash  generated.md\n");
+      Files.writeString(targetDir.resolve("generated.md.sha256"), "badhash  generated.md\n");
 
-      // And a valid hash outside target
       Path mdFile = tempDir.resolve("AGENTS.md");
       Files.writeString(mdFile, "content");
       String hash = HashUtils.computeHash(mdFile, "SHA-256");
       Files.writeString(tempDir.resolve("AGENTS.md.sha256"), hash + "  AGENTS.md\n");
 
-      // When/Then: only the non-target file is verified (should pass)
+      // When/Then
       assertDoesNotThrow(() -> mojo.execute());
     }
 
@@ -194,11 +185,24 @@ class HashVerifyMojoTest {
       // Given
       setField(mojo, "baseDir", "");
       when(project.getBasedir()).thenReturn(tempDir.toFile());
-
       Path mdFile = tempDir.resolve("test.md");
       Files.writeString(mdFile, "content");
       String hash = HashUtils.computeHash(mdFile, "SHA-256");
       Files.writeString(tempDir.resolve("test.md.sha256"), hash + "  test.md\n");
+
+      // When/Then
+      assertDoesNotThrow(() -> mojo.execute());
+    }
+
+    @Test
+    @DisplayName("should verify .sha512 files when algorithmBits is 512")
+    void shouldVerifySha512() throws Exception {
+      // Given
+      setField(mojo, "algorithmBits", 512);
+      Path mdFile = tempDir.resolve("AGENTS.md");
+      Files.writeString(mdFile, "content");
+      String hash = HashUtils.computeHash(mdFile, "SHA-512");
+      Files.writeString(tempDir.resolve("AGENTS.md.sha512"), hash + "  AGENTS.md\n");
 
       // When/Then
       assertDoesNotThrow(() -> mojo.execute());

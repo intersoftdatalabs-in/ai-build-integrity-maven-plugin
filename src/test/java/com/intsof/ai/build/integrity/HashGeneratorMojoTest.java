@@ -14,17 +14,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intersoftdatalabs.ai.integrity;
+package com.intsof.ai.build.integrity;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import java.io.File;
 import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
-import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.project.MavenProject;
 import org.junit.jupiter.api.BeforeEach;
@@ -41,9 +38,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class HashGeneratorMojoTest {
 
   @Mock private MavenProject project;
-
   @Mock private Log log;
-
   @TempDir Path tempDir;
 
   private HashGeneratorMojo mojo;
@@ -55,10 +50,11 @@ class HashGeneratorMojoTest {
     setField(mojo, "project", project);
     setField(mojo, "algorithmBits", 256);
     setField(mojo, "includes", "**/*.md");
-    setField(mojo, "excludes", "**/*.sha256");
+    setField(mojo, "excludes", "**/*.sha256,**/*.sha384,**/*.sha512");
     setField(mojo, "baseDir", tempDir.toString());
-    setField(mojo, "outputExtension", ".sha256");
+    setField(mojo, "outputExtension", "auto");
     setField(mojo, "skipExisting", false);
+    setField(mojo, "skipDirs", "target,.git,node_modules,.tmp");
   }
 
   @Nested
@@ -66,38 +62,52 @@ class HashGeneratorMojoTest {
   class ExecuteTests {
 
     @Test
-    @DisplayName("should generate hash files for matching .md files")
+    @DisplayName("should generate .sha256 hash files for matching .md files")
     void shouldGenerateHashFiles() throws Exception {
-      // Given: a markdown file exists
+      // Given
       Path mdFile = tempDir.resolve("AGENTS.md");
       Files.writeString(mdFile, "# AI Agent Instructions\nDo the thing.");
 
-      // When: the mojo executes
+      // When
       mojo.execute();
 
-      // Then: a .sha256 companion file is created
+      // Then
       Path hashFile = tempDir.resolve("AGENTS.md.sha256");
       assertTrue(Files.exists(hashFile), "Hash file should exist");
 
       String hashContent = Files.readString(hashFile);
-      assertTrue(hashContent.contains("AGENTS.md"), "Hash file should reference the source file");
+      assertTrue(hashContent.contains("AGENTS.md"));
       String hashValue = hashContent.split("\\s+")[0];
-      assertEquals(64, hashValue.length(), "SHA-256 hex string should be 64 characters");
+      assertEquals(64, hashValue.length(), "SHA-256 hex should be 64 chars");
+    }
+
+    @Test
+    @DisplayName("should generate .sha512 files when algorithmBits is 512")
+    void shouldGenerateSha512Files() throws Exception {
+      // Given
+      setField(mojo, "algorithmBits", 512);
+      Files.writeString(tempDir.resolve("AGENTS.md"), "content");
+
+      // When
+      mojo.execute();
+
+      // Then: .sha512 extension used (auto mode)
+      Path hashFile = tempDir.resolve("AGENTS.md.sha512");
+      assertTrue(Files.exists(hashFile), ".sha512 file should exist");
+      String hashValue = Files.readString(hashFile).split("\\s+")[0];
+      assertEquals(128, hashValue.length(), "SHA-512 hex should be 128 chars");
     }
 
     @Test
     @DisplayName("should handle empty directory with no matching files")
     void shouldHandleEmptyDirectory() throws Exception {
-      // Given: an empty directory (tempDir has no .md files)
-
-      // When/Then: execute completes without error
       assertDoesNotThrow(() -> mojo.execute());
     }
 
     @Test
-    @DisplayName("should generate hashes for multiple files")
+    @DisplayName("should generate hashes for files in nested directories")
     void shouldGenerateHashesForMultipleFiles() throws Exception {
-      // Given: multiple markdown files
+      // Given
       Files.writeString(tempDir.resolve("README.md"), "# Readme");
       Files.writeString(tempDir.resolve("AGENTS.md"), "# Agents");
       Path subDir = tempDir.resolve("sub");
@@ -107,23 +117,23 @@ class HashGeneratorMojoTest {
       // When
       mojo.execute();
 
-      // Then: each file has a companion hash
+      // Then
       assertTrue(Files.exists(tempDir.resolve("README.md.sha256")));
       assertTrue(Files.exists(tempDir.resolve("AGENTS.md.sha256")));
       assertTrue(Files.exists(subDir.resolve("SKILL.md.sha256")));
     }
 
     @Test
-    @DisplayName("should exclude .sha256 files from hashing")
-    void shouldExcludeSha256Files() throws Exception {
-      // Given: a .md file and an existing .sha256 file
+    @DisplayName("should not create .sha256.sha256 files")
+    void shouldExcludeHashFiles() throws Exception {
+      // Given
       Files.writeString(tempDir.resolve("AGENTS.md"), "content");
       Files.writeString(tempDir.resolve("AGENTS.md.sha256"), "oldhash  AGENTS.md\n");
 
       // When
       mojo.execute();
 
-      // Then: no .sha256.sha256 file created
+      // Then
       assertFalse(Files.exists(tempDir.resolve("AGENTS.md.sha256.sha256")));
     }
 
@@ -139,16 +149,14 @@ class HashGeneratorMojoTest {
       // When
       mojo.execute();
 
-      // Then: the existing hash file is not overwritten
-      String content = Files.readString(hashFile);
-      assertTrue(content.startsWith("existinghash"));
+      // Then
+      assertTrue(Files.readString(hashFile).startsWith("existinghash"));
     }
 
     @Test
     @DisplayName("should overwrite existing hash files when skipExisting is false")
     void shouldOverwriteExistingWhenNotSkipping() throws Exception {
       // Given
-      setField(mojo, "skipExisting", false);
       Files.writeString(tempDir.resolve("AGENTS.md"), "content");
       Path hashFile = tempDir.resolve("AGENTS.md.sha256");
       Files.writeString(hashFile, "existinghash  AGENTS.md\n");
@@ -156,15 +164,14 @@ class HashGeneratorMojoTest {
       // When
       mojo.execute();
 
-      // Then: the hash file is overwritten with the correct hash
-      String content = Files.readString(hashFile);
-      assertFalse(content.startsWith("existinghash"));
+      // Then
+      assertFalse(Files.readString(hashFile).startsWith("existinghash"));
     }
 
     @Test
     @DisplayName("should warn and return when base directory does not exist")
     void shouldWarnForMissingBaseDir() throws Exception {
-      // Given: a non-existent base directory
+      // Given
       setField(mojo, "baseDir", tempDir.resolve("nonexistent").toString());
 
       // When/Then
@@ -175,20 +182,39 @@ class HashGeneratorMojoTest {
     @Test
     @DisplayName("should skip target directories")
     void shouldSkipTargetDirectories() throws Exception {
-      // Given: a target directory with .md files
+      // Given
       Path targetDir = tempDir.resolve("target");
       Files.createDirectory(targetDir);
       Files.writeString(targetDir.resolve("generated.md"), "generated");
-
-      // Also create a normal .md file
       Files.writeString(tempDir.resolve("AGENTS.md"), "content");
 
       // When
       mojo.execute();
 
-      // Then: only the non-target file gets a hash
+      // Then
       assertTrue(Files.exists(tempDir.resolve("AGENTS.md.sha256")));
       assertFalse(Files.exists(targetDir.resolve("generated.md.sha256")));
+    }
+
+    @Test
+    @DisplayName("should skip .git and node_modules directories")
+    void shouldSkipConfiguredDirs() throws Exception {
+      // Given
+      Path gitDir = tempDir.resolve(".git");
+      Files.createDirectory(gitDir);
+      Files.writeString(gitDir.resolve("HEAD.md"), "ref");
+      Path nmDir = tempDir.resolve("node_modules");
+      Files.createDirectory(nmDir);
+      Files.writeString(nmDir.resolve("package.md"), "pkg");
+      Files.writeString(tempDir.resolve("AGENTS.md"), "content");
+
+      // When
+      mojo.execute();
+
+      // Then
+      assertTrue(Files.exists(tempDir.resolve("AGENTS.md.sha256")));
+      assertFalse(Files.exists(gitDir.resolve("HEAD.md.sha256")));
+      assertFalse(Files.exists(nmDir.resolve("package.md.sha256")));
     }
 
     @Test
@@ -204,6 +230,21 @@ class HashGeneratorMojoTest {
 
       // Then
       assertTrue(Files.exists(tempDir.resolve("test.md.sha256")));
+    }
+
+    @Test
+    @DisplayName("should support explicit outputExtension override")
+    void shouldSupportExplicitExtension() throws Exception {
+      // Given
+      setField(mojo, "outputExtension", ".hash");
+      Files.writeString(tempDir.resolve("AGENTS.md"), "content");
+
+      // When
+      mojo.execute();
+
+      // Then
+      assertTrue(Files.exists(tempDir.resolve("AGENTS.md.hash")));
+      assertFalse(Files.exists(tempDir.resolve("AGENTS.md.sha256")));
     }
   }
 
