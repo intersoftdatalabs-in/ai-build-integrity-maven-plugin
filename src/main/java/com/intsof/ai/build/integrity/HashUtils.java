@@ -38,6 +38,7 @@ public final class HashUtils {
   /** Pre-computed hex lookup table — avoids String.format per byte. */
   private static final char[] HEX_CHARS = "0123456789abcdef".toCharArray();
 
+  /** Utility class: no instantiation allowed. */
   private HashUtils() {
     // utility class
   }
@@ -45,7 +46,7 @@ public final class HashUtils {
   /**
    * Resolves the SHA algorithm name from the configured bit width.
    *
-   * @param algorithmBits the bit width (e.g. 256, 384, 512)
+   * @param algorithmBits the bit width (supported: 256, 384, 512)
    * @return the JCA algorithm name (e.g. "SHA-256")
    */
   public static String resolveAlgorithm(int algorithmBits) {
@@ -56,7 +57,7 @@ public final class HashUtils {
    * Returns the conventional file extension for a given hash algorithm bit width (e.g. ".sha256",
    * ".sha512").
    *
-   * @param algorithmBits the bit width
+   * @param algorithmBits the bit width (supported: 256, 384, 512)
    * @return the extension string including the leading dot
    */
   public static String extensionForBits(int algorithmBits) {
