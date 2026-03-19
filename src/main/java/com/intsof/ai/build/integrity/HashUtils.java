@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intersoftdatalabs.ai.integrity;
+package com.intsof.ai.build.integrity;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -27,11 +27,16 @@ import java.util.Set;
 
 /**
  * Shared utility methods for hash computation, pattern parsing, and hex encoding used by both the
- * generate and verify mojos.
+ * generate and verify mojos. All methods are designed to be fast and allocation-light for use in
+ * large monorepo traversals.
  */
 public final class HashUtils {
 
-  private static final int BUFFER_SIZE = 8192;
+  /** I/O buffer size — 64 KiB balances syscall overhead vs memory on large file trees. */
+  private static final int BUFFER_SIZE = 65_536;
+
+  /** Pre-computed hex lookup table — avoids String.format per byte. */
+  private static final char[] HEX_CHARS = "0123456789abcdef".toCharArray();
 
   private HashUtils() {
     // utility class
@@ -48,7 +53,20 @@ public final class HashUtils {
   }
 
   /**
+   * Returns the conventional file extension for a given hash algorithm bit width (e.g. ".sha256",
+   * ".sha512").
+   *
+   * @param algorithmBits the bit width
+   * @return the extension string including the leading dot
+   */
+  public static String extensionForBits(int algorithmBits) {
+    return ".sha" + algorithmBits;
+  }
+
+  /**
    * Computes the hash of a file using the specified algorithm.
+   *
+   * <p>Uses a 64 KiB buffer for streaming reads, keeping heap pressure low even on large files.
    *
    * @param file the file to hash
    * @param algorithm the JCA algorithm name (e.g. "SHA-256")
@@ -90,16 +108,19 @@ public final class HashUtils {
   }
 
   /**
-   * Converts a byte array to a lowercase hexadecimal string.
+   * Converts a byte array to a lowercase hexadecimal string using a lookup table. This is
+   * significantly faster than {@code String.format("%02x")} per byte.
    *
    * @param bytes the bytes to encode
    * @return the hex-encoded string
    */
   public static String bytesToHex(byte[] bytes) {
-    StringBuilder sb = new StringBuilder(bytes.length * 2);
-    for (byte b : bytes) {
-      sb.append(String.format("%02x", b));
+    char[] hex = new char[bytes.length * 2];
+    for (int i = 0; i < bytes.length; i++) {
+      int v = bytes[i] & 0xFF;
+      hex[i * 2] = HEX_CHARS[v >>> 4];
+      hex[i * 2 + 1] = HEX_CHARS[v & 0x0F];
     }
-    return sb.toString();
+    return new String(hex);
   }
 }

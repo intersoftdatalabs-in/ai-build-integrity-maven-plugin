@@ -4,7 +4,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.intersoftdatalabs</groupId>
+    <groupId>com.intsof</groupId>
     <artifactId>ai-build-integrity-maven-plugin</artifactId>
     <version>1.0.0-SNAPSHOT</version>
     <packaging>maven-plugin</packaging>
@@ -13,7 +13,8 @@
     <description>
         Maven plugin that generates and verifies cryptographic hashes for AI instruction files
         (AGENTS.md, SKILL.md, etc.), ensuring that nothing changes AI instructions once the build
-        has begun or once the artifact is shipped.
+        has begun or once the artifact is shipped. Designed to be fast and lightweight for both
+        single-module projects and large monorepos.
     </description>
     <url>https://github.com/intersoftdatalabs-in/ai-build-integrity-maven-plugin</url>
 
@@ -41,12 +42,16 @@
         <url>https://github.com/intersoftdatalabs-in/ai-build-integrity-maven-plugin/issues</url>
     </issueManagement>
 
+    <prerequisites>
+        <maven>3.6.3</maven>
+    </prerequisites>
+
     <properties>
         <java.version>11</java.version>
         <maven.compiler.release>${java.version}</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <maven.api.version>3.9.6</maven.api.version>
+        <maven.api.version>3.6.3</maven.api.version>
         <maven.plugin.tools.version>3.14.0</maven.plugin.tools.version>
         <junit5.version>5.11.4</junit5.version>
         <mockito.version>5.14.2</mockito.version>
