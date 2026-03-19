@@ -148,14 +148,14 @@ Common examples of mutating plugins include Spotless `apply`, license-header plu
 
 ## Configuration Properties
 
-|            Property            |                Default                |                         Description                          |
-|--------------------------------|---------------------------------------|--------------------------------------------------------------|
-| `ai.integrity.algorithm.bits`  | `256`                                 | Hash algorithm bit width: `256`, `384`, or `512`             |
-| `ai.integrity.includes`        | `**/*.md`                             | Comma-separated glob patterns for files to hash              |
-| `ai.integrity.excludes`        | `**/*.sha256,**/*.sha384,**/*.sha512` | Comma-separated glob patterns for files to exclude           |
-| `ai.integrity.baseDir`         | `${project.basedir}`                  | Base directory to scan                                       |
-| `ai.integrity.outputExtension` | `auto`                                | Sidecar file extension. `auto` derives from algorithmBits    |
-| `ai.integrity.skipExisting`    | `false`                               | Skip generating hashes for files that already have a sidecar |
-| `ai.integrity.skipDirs`        | `target,.git,node_modules,.tmp`       | Comma-separated directory names to skip                      |
-| `ai.integrity.executionRootOnly`| `false`                              | If true, the mojo only executes in the reactor's root project|
+|             Property             |                Default                |                          Description                          |
+|----------------------------------|---------------------------------------|---------------------------------------------------------------|
+| `ai.integrity.algorithm.bits`    | `256`                                 | Hash algorithm bit width: `256`, `384`, or `512`              |
+| `ai.integrity.includes`          | `**/*.md`                             | Comma-separated glob patterns for files to hash               |
+| `ai.integrity.excludes`          | `**/*.sha256,**/*.sha384,**/*.sha512` | Comma-separated glob patterns for files to exclude            |
+| `ai.integrity.baseDir`           | `${project.basedir}`                  | Base directory to scan                                        |
+| `ai.integrity.outputExtension`   | `auto`                                | Sidecar file extension. `auto` derives from algorithmBits     |
+| `ai.integrity.skipExisting`      | `false`                               | Skip generating hashes for files that already have a sidecar  |
+| `ai.integrity.skipDirs`          | `target,.git,node_modules,.tmp`       | Comma-separated directory names to skip                       |
+| `ai.integrity.executionRootOnly` | `false`                               | If true, the mojo only executes in the reactor's root project |
 
