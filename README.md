@@ -252,7 +252,7 @@ The build fails with a `MojoExecutionException`.
 
 ## Requirements
 
-* Maven 3.9.14+
+* Maven 3.9.x+
 * JDK 11+
 
 ## Building From Source
