@@ -26,8 +26,10 @@ public abstract class GitIgnoreAwareFileVisitor extends SimpleFileVisitor<Path> 
   private final List<PathMatcher> forceIncludeMatchers;
   private final Log log;
 
-  // Real-time tracking stack of all executing gitignore predicates relative to directory depth
-  private final Deque<List<Predicate<Path>>> gitIgnoreStack = new ArrayDeque<>();
+  // Tracks all parsed predicates grouped by the directory level they were found in
+  private final Deque<List<Predicate<Path>>> gitIgnorePredicates = new ArrayDeque<>();
+  // Tracks the computed ignored boolean state inherited per directory depth (O(1) lookups)
+  private final Deque<Boolean> ignoreStateStack = new ArrayDeque<>();
 
   /**
    * Constructs a new visitor with the specified configuration.
@@ -61,15 +63,18 @@ public abstract class GitIgnoreAwareFileVisitor extends SimpleFileVisitor<Path> 
       }
     }
 
-    boolean ignoredByGit = false;
-    for (List<Predicate<Path>> ignores : gitIgnoreStack) {
-      for (Predicate<Path> ignore : ignores) {
-        if (ignore.test(dir)) {
-          ignoredByGit = true;
-          break;
+    boolean ignoredByGit = !ignoreStateStack.isEmpty() && ignoreStateStack.peek();
+
+    if (!ignoredByGit) {
+      for (List<Predicate<Path>> ignores : gitIgnorePredicates) {
+        for (Predicate<Path> ignore : ignores) {
+          if (ignore.test(dir)) {
+            ignoredByGit = true;
+            break;
+          }
         }
+        if (ignoredByGit) break;
       }
-      if (ignoredByGit) break;
     }
 
     List<Predicate<Path>> localIgnores = new ArrayList<>();
@@ -82,14 +87,19 @@ public abstract class GitIgnoreAwareFileVisitor extends SimpleFileVisitor<Path> 
           log.warn("Failed to parse " + gitignore + ": " + e.getMessage());
         }
 
-        for (Predicate<Path> ignore : localIgnores) {
-          if (ignore.test(dir)) {
-            ignoredByGit = true;
-            break;
+        if (!ignoredByGit) {
+          for (Predicate<Path> ignore : localIgnores) {
+            if (ignore.test(dir)) {
+              ignoredByGit = true;
+              break;
+            }
           }
         }
       }
     }
+
+    ignoreStateStack.push(ignoredByGit);
+    gitIgnorePredicates.push(localIgnores);
 
     if (ignoredByGit) {
       // If forceIncludes are provided, we cannot safely prune the ignored branch natively
@@ -99,13 +109,13 @@ public abstract class GitIgnoreAwareFileVisitor extends SimpleFileVisitor<Path> 
       }
     }
 
-    gitIgnoreStack.push(localIgnores);
     return FileVisitResult.CONTINUE;
   }
 
   @Override
   public FileVisitResult postVisitDirectory(Path dir, IOException exc) {
-    gitIgnoreStack.pop();
+    ignoreStateStack.pop();
+    gitIgnorePredicates.pop();
     return FileVisitResult.CONTINUE;
   }
 
@@ -116,10 +126,17 @@ public abstract class GitIgnoreAwareFileVisitor extends SimpleFileVisitor<Path> 
    * @return true if the file is ignored by any .gitignore rule in the current traversal stack
    */
   protected boolean isIgnoredByGit(Path file) {
-    if (!gitignoreAutoExclude || gitIgnoreStack.isEmpty()) {
+    if (!gitignoreAutoExclude) {
       return false;
     }
-    for (List<Predicate<Path>> ignores : gitIgnoreStack) {
+
+    // Fallback exactly to the parent directory's inherited state
+    if (!ignoreStateStack.isEmpty() && ignoreStateStack.peek()) {
+      return true;
+    }
+
+    // Evaluate against all active rules to see if this specific file matches an exclusion
+    for (List<Predicate<Path>> ignores : gitIgnorePredicates) {
       for (Predicate<Path> ignore : ignores) {
         if (ignore.test(file)) {
           return true;
