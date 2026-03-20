@@ -6,7 +6,7 @@ The plugin binds to standard Maven lifecycles seamlessly.
 
 Walks the project base directory and captures cryptographic fingerprints of every file matching the include patterns.
 
-* **Default phase:** `initialize`
+* **Default phase:** `validate`
 * **Default includes:** `**/*.md`
 * **Default exclusions:** `**/*.sha256` (and other hash extensions)
 * **Default bypasses:** `target`, `.git`, `node_modules`, `.tmp`
