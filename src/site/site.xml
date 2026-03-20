@@ -14,6 +14,7 @@
       <item name="Introduction" href="index.html"/>
       <item name="Usage" href="usage.html"/>
       <item name="Goals" href="goals.html"/>
+      <item name="Troubleshooting" href="troubleshooting.html"/>
       <item name="Plugin Info" href="plugin-info.html"/>
     </menu>
     <menu ref="reports"/>

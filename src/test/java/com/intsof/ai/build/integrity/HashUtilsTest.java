@@ -91,7 +91,7 @@ class HashUtilsTest {
       Files.writeString(file, "Hello, World!");
 
       // When
-      String hash = HashUtils.computeHash(file, "SHA-256");
+      String hash = HashUtils.computeHash(file, "SHA-256", false);
 
       // Then
       assertEquals("dffd6021bb2bd5b0af676290809ec3a53191dd81c7f70a4b28688a362182986f", hash);
@@ -105,7 +105,7 @@ class HashUtilsTest {
       Files.writeString(file, "Hello, World!");
 
       // When
-      String hash = HashUtils.computeHash(file, "SHA-512");
+      String hash = HashUtils.computeHash(file, "SHA-512", false);
 
       // Then: SHA-512 produces 128 hex chars
       assertEquals(128, hash.length());
@@ -119,8 +119,8 @@ class HashUtilsTest {
       Files.writeString(file1, "Content A");
       Files.writeString(file2, "Content B");
 
-      String hash1 = HashUtils.computeHash(file1, "SHA-256");
-      String hash2 = HashUtils.computeHash(file2, "SHA-256");
+      String hash1 = HashUtils.computeHash(file1, "SHA-256", false);
+      String hash2 = HashUtils.computeHash(file2, "SHA-256", false);
 
       assertNotEquals(hash1, hash2);
     }
@@ -134,7 +134,8 @@ class HashUtilsTest {
       Files.writeString(file2, "Same content");
 
       assertEquals(
-          HashUtils.computeHash(file1, "SHA-256"), HashUtils.computeHash(file2, "SHA-256"));
+          HashUtils.computeHash(file1, "SHA-256", false),
+          HashUtils.computeHash(file2, "SHA-256", false));
     }
 
     @Test
@@ -145,7 +146,7 @@ class HashUtilsTest {
 
       assertEquals(
           "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-          HashUtils.computeHash(file, "SHA-256"));
+          HashUtils.computeHash(file, "SHA-256", false));
     }
 
     @Test
@@ -155,7 +156,7 @@ class HashUtilsTest {
       Files.writeString(file, "content");
 
       assertThrows(
-          NoSuchAlgorithmException.class, () -> HashUtils.computeHash(file, "SHA-INVALID"));
+          NoSuchAlgorithmException.class, () -> HashUtils.computeHash(file, "SHA-INVALID", false));
     }
 
     @Test
@@ -163,7 +164,7 @@ class HashUtilsTest {
     void shouldThrowForNonExistentFile() {
       Path file = tempDir.resolve("nonexistent.md");
 
-      assertThrows(IOException.class, () -> HashUtils.computeHash(file, "SHA-256"));
+      assertThrows(IOException.class, () -> HashUtils.computeHash(file, "SHA-256", false));
     }
   }
 
