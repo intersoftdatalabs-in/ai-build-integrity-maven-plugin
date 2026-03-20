@@ -210,6 +210,15 @@ class HashUtilsTest {
     void shouldSkipEmptyEntries() {
       assertEquals(Set.of("**/*.md", "**/*.txt"), HashUtils.parsePatterns("**/*.md,,**/*.txt"));
     }
+
+    @Test
+    @DisplayName("should parse multi-line patterns with mixed delimiters")
+    void shouldParseMultiLinePatterns() {
+      String input = "\n  **/*.md,\n  src/main/**/*.java \n   **/*.xml  ,  **/*.yaml ";
+      assertEquals(
+          Set.of("**/*.md", "src/main/**/*.java", "**/*.xml", "**/*.yaml"),
+          HashUtils.parsePatterns(input));
+    }
   }
 
   @Nested
