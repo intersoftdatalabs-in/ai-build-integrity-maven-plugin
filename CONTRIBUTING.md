@@ -1,6 +1,6 @@
 # Contributing to AI Build Integrity Maven Plugin
 
-Thank you for your interest in contributing! We welcome contributions of all kinds, including bug fixes, feature requests, and documentation improvements.
+Thank you for your interest in contributing! We welcome contributions of all kinds from both developers and security engineers. Whether you are adding new SIEM reporting capabilities, optimizing the hashing engine, or just fixing a typo, your help makes the AI supply-chain more secure for everyone.
 
 ## Code of Conduct
 
@@ -11,7 +11,7 @@ All contributors are expected to follow our standard Code of Conduct (be kind, b
 ### Reporting Issues
 
 1. Check the [Issue Tracker](https://github.com/intersoftdatalabs-in/ai-build-integrity-maven-plugin/issues) to see if the issue has already been reported.
-2. If it hasn't, open a new issue. Provide as much detail as possible, including your environment, steps to reproduce, and expected vs. actual behavior.
+2. If it hasn't, open a new issue. Provide as much detail as possible, including your environment, your `hashFileMode` configuration, and steps to reproduce.
 
 ### Making Changes
 
@@ -22,11 +22,13 @@ All contributors are expected to follow our standard Code of Conduct (be kind, b
    ```bash
    mvn spotless:apply
    ```
+
 4. Run all tests to ensure no regressions:
 
    ```bash
    mvn clean test
    ```
+
 5. Commit your changes with descriptive commit messages.
 6. Push your branch to your fork and open a Pull Request.
 
@@ -160,63 +162,6 @@ This will automatically:
 
 Remember to still verify and manually publish on the Central Portal since `autoPublish` is
 `false`.
-
-## Publishing the Site to GitHub Pages
-
-The project uses the Maven Site Plugin to generate documentation including plugin goal
-descriptions, configuration properties, and project reports.
-
-### Prerequisites
-
-1. **GitHub Pages enabled** — go to **Settings → Pages** in the repository and set the
-   source to **"Deploy from a branch"** with the `gh-pages` branch selected.
-2. The `gh-pages` branch must exist. Create it if needed:
-
-   ```bash
-   git checkout --orphan gh-pages
-   git rm -rf .
-   git commit --allow-empty -m "Initialize gh-pages"
-   git push origin gh-pages
-   git checkout main
-   ```
-
-### Step 1 — Generate the Site
-
-Build the site locally to verify it renders correctly:
-
-```bash
-mvn clean site
-```
-
-The generated site will be in `target/site/`. Open `target/site/index.html` in a browser to
-review.
-
-### Step 2 — Deploy to GitHub Pages
-
-Push the site contents to the `gh-pages` branch manually:
-
-```bash
-SITE_DIR=$(mktemp -d)
-cp -r target/site/* "$SITE_DIR"
-git checkout gh-pages
-rm -rf *
-cp -r "$SITE_DIR"/* .
-git add -A
-git commit -m "Update site for version 1.0.2"
-git push origin gh-pages
-git checkout main
-rm -rf "$SITE_DIR"
-```
-
-After pushing, the site will be available at:
-`https://intersoftdatalabs-in.github.io/ai-build-integrity-maven-plugin/`
-
-### When to Publish
-
-- **After each release** — update the site to reflect the latest version's plugin
-  documentation and reports.
-- **After significant documentation changes** — if you update `src/site/markdown/` content
-  on `main`, regenerate and redeploy the site.
 
 ## License
 

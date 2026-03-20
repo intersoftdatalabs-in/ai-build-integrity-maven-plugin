@@ -70,3 +70,11 @@ The AI Build Integrity Plugin handles everything from massive Monorepos to compl
 - **[FAQ](src/site/markdown/faq.md):** Common questions regarding Git check-ins, formatting plugins, and best practices.
 - **[Troubleshooting](src/site/markdown/troubleshooting.md):** Solutions for common errors, skipped subtrees, and execution ordering.
 
+---
+
+## 🤝 Community & Support
+
+- 🐛 **Have an issue or found a bug?** [Open an issue on GitHub](https://github.com/intersoftdatalabs-in/ai-build-integrity-maven-plugin/issues)
+- 💡 **Want to contribute?** We'd love your help! Check out our [Contributor Guide](CONTRIBUTING.md)
+- 🛡️ **Found a security vulnerability?** Please read our [Security Policy](SECURITY.md) for responsible disclosure.
+
