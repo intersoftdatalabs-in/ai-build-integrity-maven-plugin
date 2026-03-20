@@ -1,12 +1,12 @@
-# Usage
+# Usage & Implementation
 
-Choose the lifecycle placement based on whether your build rewrites protected files such as `AGENTS.md`, `SKILL.md`, or other matched instruction files.
+The AI Build Integrity Maven Plugin guarantees that your AI instructions (e.g. `AGENTS.md`) and critical files have not been modified since the build began or since the final artifact was shipped.
 
-## Minimal Config
+Below are the most common configurations for seamless enterprise integration.
 
-The most common enterprise setup uses `CENTRAL` ledger mode to eliminate sidecar pollution across the source directory, relying entirely on the plugin's secure defaults.
+## 1. Single-Module Project (Simplified)
 
-### Single-Module Project
+For a standard Maven application, attaching the plugin is incredibly simple. It uses the `CENTRAL` ledger configuration to avoid depositing `.sha` sidecar files natively across your source structure.
 
 ```xml
 <build>
@@ -14,7 +14,7 @@ The most common enterprise setup uses `CENTRAL` ledger mode to eliminate sidecar
         <plugin>
             <groupId>com.intsof</groupId>
             <artifactId>ai-build-integrity-maven-plugin</artifactId>
-            <version>${project.version}</version>
+            <version>0.9.0-SNAPSHOT</version>
             <configuration>
                 <hashFileMode>CENTRAL</hashFileMode>
             </configuration>
@@ -37,9 +37,15 @@ The most common enterprise setup uses `CENTRAL` ledger mode to eliminate sidecar
 </build>
 ```
 
-### Monorepo (Parent POM)
+---
 
-Add to the parent POM's `<build><plugins>` section. The parent project will secure the entire repository at T=0 natively.
+## 2. Large Monorepos
+
+Monorepos possess extreme complexity, as they can sometimes contain hundreds of localized modules. The plugin intelligently scales into long-running reactor builds.
+
+Add the following to your Parent POM's `<build><plugins>` section.
+
+**How it works seamlessly:** The parent securely traverses and generates hashes at the very start of the build (T=0). As Maven builds each of the 500 child modules over hours, the child modules locally execute quick hash verifications. If a rogue process modifies an instruction file halfway through the pipeline, the build brutally fails.
 
 ```xml
 <build>
@@ -47,29 +53,31 @@ Add to the parent POM's `<build><plugins>` section. The parent project will secu
         <plugin>
             <groupId>com.intsof</groupId>
             <artifactId>ai-build-integrity-maven-plugin</artifactId>
-            <version>${project.version}</version>
+            <version>0.9.0-SNAPSHOT</version>
             <configuration>
                 <hashFileMode>CENTRAL</hashFileMode>
+                <!-- Include your proprietary rulebook files -->
+                <includes>**/*.md,**/*.json</includes>
             </configuration>
             <executions>
                 <execution>
                     <id>generate</id>
                     <goals><goal>generate-hashes</goal></goals>
                     <configuration>
-                        <!-- Generates hashes for the entire repository ONLY at the root at T=0 -->
+                        <!-- Hash ONLY once at the root directory level across the whole repo -->
                         <executionRootOnly>true</executionRootOnly>
                     </configuration>
                 </execution>
                 <execution>
                     <id>verify</id>
                     <goals><goal>verify-hashes</goal></goals>
-                    <!-- Verify automatically runs in every child module -->
+                    <!-- Missing executionRootOnly means it safely verifies on localized child modules -->
                 </execution>
                 <execution>
                     <id>clean</id>
                     <goals><goal>clean-hashes</goal></goals>
                     <configuration>
-                        <!-- Cleans the entire repository's hashes only once at the root -->
+                        <!-- Deletes the central target/ ledger only once when root is cleaned -->
                         <executionRootOnly>true</executionRootOnly>
                     </configuration>
                 </execution>
@@ -81,320 +89,69 @@ Add to the parent POM's `<build><plugins>` section. The parent project will secu
 
 ---
 
-## Full Options
+## 3. SIEM-Audited Setup (Security Hardened)
 
-## If Your Build Does Not Rewrite Protected Files
-
-Use this setup when your build only reads instruction files, or when tools like Spotless run in check-only mode and do not modify matched files.
-
-### Single-Module Project (Full Options)
+If you are an IT Security team rolling this out across a huge organization, you may encounter pushback from developers. To minimize friction, you can initially enable the plugin in "Soft-Fail" Auditing Mode while simultaneously emitting SIEM reports.
 
 ```xml
-<build>
-    <plugins>
-        <plugin>
-            <groupId>com.intsof</groupId>
-            <artifactId>ai-build-integrity-maven-plugin</artifactId>
-            <version>${project.version}</version>
-            <executions>
-                <execution>
-                    <id>generate-hashes</id>
-                    <phase>initialize</phase>
-                    <goals>
-                        <goal>generate-hashes</goal>
-                    </goals>
-                    <configuration>
-                        <algorithmBits>256</algorithmBits>
-                        <includes>**/*.md</includes>
-                        <excludes>**/*.sha256,**/*.sha384,**/*.sha512</excludes>
-                        <skipDirs>target,.git,node_modules,.tmp</skipDirs>
-                        <executionRootOnly>false</executionRootOnly>
-                        <gitignoreAutoExclude>false</gitignoreAutoExclude>
-                        <forceIncludes></forceIncludes>
-                        <hideHashFiles>true</hideHashFiles>
-                        <hashFileMode>SIDECAR</hashFileMode>
-                        <skip>false</skip>
-                        <normalizeLineEndings>false</normalizeLineEndings>
-                    </configuration>
-                </execution>
-                <execution>
-                    <id>verify-hashes</id>
-                    <phase>test</phase>
-                    <goals>
-                        <goal>verify-hashes</goal>
-                    </goals>
-                    <configuration>
-                        <algorithmBits>256</algorithmBits>
-                        <includes>**/*.md</includes>
-                        <excludes>**/*.sha256,**/*.sha384,**/*.sha512</excludes>
-                        <skipDirs>target,.git,node_modules,.tmp</skipDirs>
-                        <executionRootOnly>false</executionRootOnly>
-                        <gitignoreAutoExclude>false</gitignoreAutoExclude>
-                        <forceIncludes></forceIncludes>
-                        <hideHashFiles>true</hideHashFiles>
-                        <hashFileMode>SIDECAR</hashFileMode>
-                        <skip>false</skip>
-                        <normalizeLineEndings>false</normalizeLineEndings>
-                        <failOnError>true</failOnError>
-                        <generateAuditReport>false</generateAuditReport>
-                    </configuration>
-                </execution>
-                <execution>
-                    <id>clean-hashes</id>
-                    <phase>clean</phase>
-                    <goals>
-                        <goal>clean-hashes</goal>
-                    </goals>
-                    <configuration>
-                        <algorithmBits>256</algorithmBits>
-                        <includes>**/*.md</includes>
-                        <excludes>**/*.sha256,**/*.sha384,**/*.sha512</excludes>
-                        <skipDirs>target,.git,node_modules,.tmp</skipDirs>
-                        <executionRootOnly>false</executionRootOnly>
-                        <gitignoreAutoExclude>false</gitignoreAutoExclude>
-                        <forceIncludes></forceIncludes>
-                        <hideHashFiles>true</hideHashFiles>
-                        <hashFileMode>SIDECAR</hashFileMode>
-                        <skip>false</skip>
-                    </configuration>
-                </execution>
-            </executions>
-        </plugin>
-    </plugins>
-</build>
+<verify-hashes-execution>
+    <configuration>
+        <!-- Swallow hard exceptions, only log heavily to avoid breaking CI pipelines during rollout -->
+        <failOnError>false</failOnError>
+        <!-- Emit a consolidated JSON Report of File Validations to ingest into Datadog/Splunk -->
+        <generateAuditReport>true</generateAuditReport>
+    </configuration>
+</verify-hashes-execution>
 ```
 
-### Monorepo (Parent POM - Full Options)
+---
 
-Add to the parent POM's `<build><plugins>` section. Each child module will automatically generate and verify hashes within its own `${project.basedir}`:
+## 4. Full Options Documentation
 
-```xml
-<plugin>
-    <groupId>com.intsof</groupId>
-    <artifactId>ai-build-integrity-maven-plugin</artifactId>
-    <version>${project.version}</version>
-    <executions>
-        <execution>
-            <id>generate-hashes</id>
-            <phase>initialize</phase>
-            <goals>
-                <goal>generate-hashes</goal>
-            </goals>
-            <configuration>
-                <!-- Generates hashes for the entire repository ONLY at the root at T=0 -->
-                <algorithmBits>256</algorithmBits>
-                <includes>**/*.md</includes>
-                <excludes>**/*.sha256,**/*.sha384,**/*.sha512</excludes>
-                <skipDirs>target,.git,node_modules,.tmp</skipDirs>
-                <executionRootOnly>true</executionRootOnly>
-                <gitignoreAutoExclude>false</gitignoreAutoExclude>
-                <forceIncludes></forceIncludes>
-                <hideHashFiles>true</hideHashFiles>
-                <hashFileMode>SIDECAR</hashFileMode>
-                <skip>false</skip>
-                <normalizeLineEndings>false</normalizeLineEndings>
-                <failOnError>true</failOnError>
-                <generateAuditReport>false</generateAuditReport>
-            </configuration>
-        </execution>
-        <execution>
-            <id>verify-hashes</id>
-            <phase>test</phase>
-            <goals>
-                <goal>verify-hashes</goal>
-            </goals>
-            <configuration>
-                <!-- Runs locally in every child module to continually ensure hashes didn't change -->
-                <algorithmBits>256</algorithmBits>
-                <includes>**/*.md</includes>
-                <excludes>**/*.sha256,**/*.sha384,**/*.sha512</excludes>
-                <skipDirs>target,.git,node_modules,.tmp</skipDirs>
-                <executionRootOnly>false</executionRootOnly>
-                <gitignoreAutoExclude>false</gitignoreAutoExclude>
-                <forceIncludes></forceIncludes>
-                <hideHashFiles>true</hideHashFiles>
-                <hashFileMode>SIDECAR</hashFileMode>
-                <skip>false</skip>
-                <normalizeLineEndings>false</normalizeLineEndings>
-                <failOnError>true</failOnError>
-                <generateAuditReport>false</generateAuditReport>
-            </configuration>
-        </execution>
-        <execution>
-            <id>clean-hashes</id>
-            <phase>clean</phase>
-            <goals>
-                <goal>clean-hashes</goal>
-            </goals>
-            <configuration>
-                <!-- Cleans the ENTIRE repository hashes only once at the root -->
-                <algorithmBits>256</algorithmBits>
-                <includes>**/*.md</includes>
-                <excludes>**/*.sha256,**/*.sha384,**/*.sha512</excludes>
-                <skipDirs>target,.git,node_modules,.tmp</skipDirs>
-                <executionRootOnly>true</executionRootOnly>
-                <gitignoreAutoExclude>false</gitignoreAutoExclude>
-                <forceIncludes></forceIncludes>
-                <hideHashFiles>true</hideHashFiles>
-                <hashFileMode>SIDECAR</hashFileMode>
-                <skip>false</skip>
-                <normalizeLineEndings>false</normalizeLineEndings>
-                <failOnError>true</failOnError>
-                <generateAuditReport>false</generateAuditReport>
-            </configuration>
-        </execution>
-    </executions>
-</plugin>
-```
-
-#### Standalone Module Builds
-
-When building individual modules within a Monorepo, the plugin natively secures the developer workflow:
-
-1. **Running from a child directory** (`cd child-b && mvn test`): Because Maven is invoked from the child directory, it officially becomes the execution root for that session. `generate-hashes` securely runs locally at T=0.
-2. **Targeting via Project List** (`mvn test -pl child-b`): The root parent is the execution root but omitted from the build. `generate-hashes` is safely bypassed. Because no fresh hashes are generated for the omitted root execution, the child module simply verifies whatever `.sha` files currently exist on your local disk from a previous global generation. To explicitly establish a fresh tamper-seal during a targeted build, use `mvn ai-build-integrity:generate-hashes -pl child-b`.
-
-## Securing Entire Applications (Mixed & Frontend Projects)
-
-To seal all source code, resources, scripts, and front-end application files, simply expand the `<includes>` tag with comma-separated glob patterns.
-
-Because the plugin's `skipDirs` configuration natively ignores `node_modules`, `target`, and `.git` by default, the file scanner will effortlessly navigate heavy front-end repositories containing hundreds of thousands of dependencies without sacrificing any performance. You can also set `<gitignoreAutoExclude>true</gitignoreAutoExclude>` to natively read your repository's `.gitignore` files and automatically exclude local development caches or IDE folders like `.idea/`. If there are critical hidden files (like `.env`) that you intentionally ignore in Git but still want to secure, you can strictly override this logic using `<forceIncludes>**/.env</forceIncludes>`.
+To leverage every configuration parameter exposed by the plugin engine, consult the `<configuration>` block below. These apply individually to the `generate-hashes`, `verify-hashes`, and `clean-hashes` goals.
 
 ```xml
 <configuration>
-    <!-- Secure BOTH the Java Backend and the TS/React JS Frontend -->
+    <!-- Use SHA-256 (default), SHA-384, or SHA-512 cryptographic digests -->
     <algorithmBits>256</algorithmBits>
-    <includes>
-        **/*.java,**/*.xml,**/*.properties,**/*.yaml,**/*.sh,
-        **/*.ts,**/*.tsx,**/*.js,**/*.jsx,**/*.json,
-        **/*.css,**/*.scss,**/*.html,**/*.md
-    </includes>
-    <excludes>**/*.sha256,**/*.sha384,**/*.sha512</excludes>
+
+    <!-- Defines which critical files to secure -->
+    <includes>**/*.md,**/*.yml,**/*.json</includes>
+
+    <!-- Prevents securing intermediate files or generated outputs internally -->
+    <excludes>**/*.sha256</excludes>
+
+    <!-- Force PRUNES tree traversal logic on these gigantic directories -->
     <skipDirs>target,.git,node_modules,.tmp</skipDirs>
-    <executionRootOnly>true</executionRootOnly>
-    <gitignoreAutoExclude>false</gitignoreAutoExclude>
-    <forceIncludes></forceIncludes>
+
+    <!-- Prevents multi-module traversal repetition -->
+    <executionRootOnly>false</executionRootOnly>
+
+    <!-- Natively parses local .gitignore files (e.g., node_modules) safely -->
+    <gitignoreAutoExclude>true</gitignoreAutoExclude>
+
+    <!-- OVERWRITES gitignore exceptions (i.e. if you WANT to protect .env but it is gitignored) -->
+    <forceIncludes>
+        <forceInclude>src/main/resources/.env*</forceInclude>
+    </forceIncludes>
+
+    <!-- CENTRAL outputs to target/ai-integrity.sha256, SIDECAR outputs to local hidden files -->
+    <hashFileMode>CENTRAL</hashFileMode>
+
+    <!-- Hide sidecar files securely down at the OS level (chmod / attrib hidden) if using SIDECAR -->
     <hideHashFiles>true</hideHashFiles>
-    <hashFileMode>SIDECAR</hashFileMode>
+
+    <!-- Globally bypass the execution for local development agility -->
     <skip>false</skip>
+
+    <!-- In-Memory normalizes Windows \r\n to Linux \n before hashing for exact OS fingerprints -->
     <normalizeLineEndings>false</normalizeLineEndings>
+
+    <!-- (VERIFY ONLY) Bypass build failures and just log warnings -->
     <failOnError>true</failOnError>
+
+    <!-- (VERIFY ONLY) Emits the Dev-Sec-Ops SIEM json payload mapping -->
     <generateAuditReport>false</generateAuditReport>
 </configuration>
 ```
-
-## If Your Build Uses Formatters or Other File-Mutating Plugins
-
-Use this setup when a formatter or any other plugin rewrites files matched by `ai.integrity.includes`. The key rule is simple: run all mutating plugins first, then run `generate-hashes` against the final file bytes, then run `verify-hashes` later in the lifecycle.
-
-Common examples of mutating plugins include Spotless `apply`, license-header plugins, templating steps, or custom generators that rewrite Markdown or prompt files.
-
-```xml
-<build>
-    <plugins>
-        <plugin>
-            <groupId>com.diffplug.spotless</groupId>
-            <artifactId>spotless-maven-plugin</artifactId>
-            <version>2.46.1</version>
-            <executions>
-                <execution>
-                    <id>format-instructions</id>
-                    <phase>process-sources</phase>
-                    <goals>
-                        <goal>apply</goal>
-                    </goals>
-                </execution>
-            </executions>
-        </plugin>
-
-        <plugin>
-            <groupId>com.intsof</groupId>
-            <artifactId>ai-build-integrity-maven-plugin</artifactId>
-            <version>${project.version}</version>
-            <executions>
-                <execution>
-                    <id>generate-hashes</id>
-                    <phase>process-sources</phase>
-                    <goals>
-                        <goal>generate-hashes</goal>
-                    </goals>
-                    <configuration>
-                        <algorithmBits>256</algorithmBits>
-                        <includes>**/*.md</includes>
-                        <excludes>**/*.sha256,**/*.sha384,**/*.sha512</excludes>
-                        <skipDirs>target,.git,node_modules,.tmp</skipDirs>
-                        <executionRootOnly>false</executionRootOnly>
-                        <gitignoreAutoExclude>false</gitignoreAutoExclude>
-                        <forceIncludes></forceIncludes>
-                        <hideHashFiles>true</hideHashFiles>
-                        <hashFileMode>SIDECAR</hashFileMode>
-                        <skip>false</skip>
-                        <normalizeLineEndings>false</normalizeLineEndings>
-                        <failOnError>true</failOnError>
-                        <generateAuditReport>false</generateAuditReport>
-                    </configuration>
-                </execution>
-                <execution>
-                    <id>verify-hashes</id>
-                    <phase>test</phase>
-                    <goals>
-                        <goal>verify-hashes</goal>
-                    </goals>
-                    <configuration>
-                        <algorithmBits>256</algorithmBits>
-                        <includes>**/*.md</includes>
-                        <excludes>**/*.sha256,**/*.sha384,**/*.sha512</excludes>
-                        <skipDirs>target,.git,node_modules,.tmp</skipDirs>
-                        <executionRootOnly>false</executionRootOnly>
-                        <gitignoreAutoExclude>false</gitignoreAutoExclude>
-                        <forceIncludes></forceIncludes>
-                        <hideHashFiles>true</hideHashFiles>
-                        <hashFileMode>SIDECAR</hashFileMode>
-                        <skip>false</skip>
-                        <normalizeLineEndings>false</normalizeLineEndings>
-                        <failOnError>true</failOnError>
-                        <generateAuditReport>false</generateAuditReport>
-                    </configuration>
-                </execution>
-                <execution>
-                    <id>clean-hashes</id>
-                    <phase>clean</phase>
-                    <goals>
-                        <goal>clean-hashes</goal>
-                    </goals>
-                    <configuration>
-                        <algorithmBits>256</algorithmBits>
-                        <includes>**/*.md</includes>
-                        <excludes>**/*.sha256,**/*.sha384,**/*.sha512</excludes>
-                        <skipDirs>target,.git,node_modules,.tmp</skipDirs>
-                        <executionRootOnly>false</executionRootOnly>
-                        <gitignoreAutoExclude>false</gitignoreAutoExclude>
-                        <forceIncludes></forceIncludes>
-                        <hideHashFiles>true</hideHashFiles>
-                        <hashFileMode>SIDECAR</hashFileMode>
-                        <skip>false</skip>
-                        <normalizeLineEndings>false</normalizeLineEndings>
-                    </configuration>
-                </execution>
-            </executions>
-        </plugin>
-    </plugins>
-</build>
-```
-
-## Configuration Properties
-
-|              Property               |                Default                |                                Description                                |
-|-------------------------------------|---------------------------------------|---------------------------------------------------------------------------|
-| `ai.integrity.algorithm.bits`       | `256`                                 | Hash algorithm bit width: `256`, `384`, or `512`                          |
-| `ai.integrity.includes`             | `**/*.md`                             | Comma-separated glob patterns for files to hash                           |
-| `ai.integrity.excludes`             | `**/*.sha256,**/*.sha384,**/*.sha512` | Comma-separated glob patterns for files to exclude                        |
-| `ai.integrity.baseDir`              | `${project.basedir}`                  | Base directory to scan                                                    |
-| `ai.integrity.outputExtension`      | `auto`                                | Sidecar file extension. `auto` derives from algorithmBits                 |
-| `ai.integrity.skipExisting`         | `false`                               | Skip generating hashes for files that already have a sidecar              |
-| `ai.integrity.skipDirs`             | `target,.git,node_modules,.tmp`       | Comma-separated directory names to skip                                   |
-| `ai.integrity.executionRootOnly`    | `false`                               | If true, the mojo only executes in the reactor's root project             |
-| `ai.integrity.gitignoreAutoExclude` | `false`                               | If true, parses local `.gitignore` files to auto-skip paths               |
-| `ai.integrity.forceIncludes`        | `""`                                  | Comma-separated glob patterns to strictly include, bypassing `.gitignore` |
-| `ai.integrity.hideHashFiles`        | `true`                                | If false, does not hide the generated hash sidecar files cross-platform   |
 
