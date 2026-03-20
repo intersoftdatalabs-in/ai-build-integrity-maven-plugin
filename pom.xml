@@ -4,7 +4,7 @@
 
     <groupId>com.intsof</groupId>
     <artifactId>ai-build-integrity-maven-plugin</artifactId>
-    <version>0.9.0-SNAPSHOT</version>
+    <version>0.9.0</version>
     <packaging>maven-plugin</packaging>
 
     <name>AI Build Integrity Maven Plugin</name>
@@ -49,6 +49,7 @@
     <scm>
         <connection>scm:git:https://github.com/intersoftdatalabs-in/ai-build-integrity-maven-plugin.git</connection>
         <developerConnection>scm:git:git@github.com:intersoftdatalabs-in/ai-build-integrity-maven-plugin.git</developerConnection>
+        <tag>v0.9.0</tag>
         <url>https://github.com/intersoftdatalabs-in/ai-build-integrity-maven-plugin</url>
     </scm>
 
