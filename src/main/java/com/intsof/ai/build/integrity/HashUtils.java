@@ -107,10 +107,9 @@ public final class HashUtils {
     if (patterns == null || patterns.isEmpty()) {
       return result;
     }
-    for (String pattern : patterns.split(",")) {
-      String trimmed = pattern.strip();
-      if (!trimmed.isEmpty()) {
-        result.add(trimmed);
+    for (String pattern : patterns.split("[\\s,]+")) {
+      if (!pattern.isEmpty()) {
+        result.add(pattern);
       }
     }
     return result;

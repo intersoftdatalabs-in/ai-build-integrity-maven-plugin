@@ -17,6 +17,20 @@ For a standard Maven application, attaching the plugin is incredibly simple. It 
             <version>0.9.0-SNAPSHOT</version>
             <configuration>
                 <hashFileMode>CENTRAL</hashFileMode>
+                <!-- Define your hashing intensity -->
+                <hashBits>256</hashBits>
+                
+                <!-- Multi-line support makes large lists readable -->
+                <includes>
+                    src/main/resources/**/*.xml,
+                    src/main/resources/**/*.properties,
+                    **/ai-instructions.md
+                </includes>
+
+                <excludes>
+                    **/target/**,
+                    **/test-output/**
+                </excludes>
             </configuration>
             <executions>
                 <execution>
