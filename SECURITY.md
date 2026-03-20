@@ -26,8 +26,8 @@ We will immediately acknowledge your report and collaborate with you to patch th
 
 Only the latest stable version of the plugin is supported for security updates.
 
-| Version | Supported          |
-| ------- | ------------------ |
+| Version |     Supported      |
+|---------|--------------------|
 | 0.9.x   | :white_check_mark: |
 | < 0.9   | :x:                |
 
