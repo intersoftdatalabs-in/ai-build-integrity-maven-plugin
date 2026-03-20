@@ -45,6 +45,12 @@ class DocumentationSyntaxTest {
     validateMarkdownFile(Paths.get("src", "site", "markdown", "faq.md"));
   }
 
+  @Test
+  @DisplayName("goals.md XML configurations should be structurally valid for Plugin Mojos")
+  void testGoalsXmlBlocks() throws Exception {
+    validateMarkdownFile(Paths.get("src", "site", "markdown", "goals.md"));
+  }
+
   private void validateMarkdownFile(Path markdownFile) throws IOException {
     if (!Files.exists(markdownFile)) {
       System.out.println("Skipping missing file: " + markdownFile);

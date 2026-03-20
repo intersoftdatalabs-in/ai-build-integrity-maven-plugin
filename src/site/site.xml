@@ -28,6 +28,7 @@
     <menu name="Overview">
       <item name="Introduction" href="index.html"/>
       <item name="Usage" href="usage.html"/>
+      <item name="Goals" href="goals.html"/>
       <item name="FAQ" href="faq.html"/>
       <item name="Troubleshooting" href="troubleshooting.html"/>
     </menu>
