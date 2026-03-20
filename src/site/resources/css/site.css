@@ -1,0 +1,5 @@
+/* Ensure the right banner logo properly scales to exactly 154px wide without distorting */
+#bannerRight img {
+    max-width: 154px !important;
+    height: auto !important;
+}

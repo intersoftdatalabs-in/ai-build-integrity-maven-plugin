@@ -8,9 +8,11 @@
   </bannerLeft>
 
   <bannerRight>
-    <name>Intersoft Data Labs</name>
-    <src>https://github.com/intersoftdatalabs-in.png?size=100</src>
+    <src>images/intsof-logo.png</src>
+    <alt>Intersoft Data Labs</alt>
+    <title>Intersoft Data Labs</title>
     <href>https://www.intsof.com/</href>
+    <width>154</width>
   </bannerRight>
 
   <publishDate format="yyyy-MM-dd" position="right"/>
