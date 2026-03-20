@@ -71,18 +71,26 @@ public final class HashUtils {
    *
    * @param file the file to hash
    * @param algorithm the JCA algorithm name (e.g. "SHA-256")
+   * @param normalizeLineEndings if true, normalizes CRLF to LF in memory before hashing
    * @return the lowercase hex-encoded hash string
    * @throws IOException if the file cannot be read
    * @throws NoSuchAlgorithmException if the algorithm is not available
    */
-  public static String computeHash(Path file, String algorithm)
+  public static String computeHash(Path file, String algorithm, boolean normalizeLineEndings)
       throws IOException, NoSuchAlgorithmException {
     MessageDigest digest = MessageDigest.getInstance(algorithm);
-    byte[] buffer = new byte[BUFFER_SIZE];
-    try (InputStream is = Files.newInputStream(file)) {
-      int read;
-      while ((read = is.read(buffer)) != -1) {
-        digest.update(buffer, 0, read);
+
+    if (normalizeLineEndings) {
+      String content = Files.readString(file, java.nio.charset.StandardCharsets.UTF_8);
+      String normalized = content.replace("\r\n", "\n");
+      digest.update(normalized.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+    } else {
+      byte[] buffer = new byte[BUFFER_SIZE];
+      try (InputStream is = Files.newInputStream(file)) {
+        int read;
+        while ((read = is.read(buffer)) != -1) {
+          digest.update(buffer, 0, read);
+        }
       }
     }
     return bytesToHex(digest.digest());

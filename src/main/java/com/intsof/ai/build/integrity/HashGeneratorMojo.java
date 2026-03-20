@@ -23,9 +23,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.PathMatcher;
 import java.nio.file.Paths;
-import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -40,7 +38,7 @@ import org.apache.maven.project.MavenProject;
 /**
  * Generates companion hash files for AI instruction resources (e.g. AGENTS.md, SKILL.md).
  *
- * <p>This mojo walks a base directory using NIO {@link Files#walkFileTree}, finds files matching
+ * <p>This mojo walks a base directory using NIO {@code Files.walkFileTree}, finds files matching
  * the configured include globs, and writes a companion hash sidecar file alongside each matched
  * file. The hash captures the file content at build time so that the verify mojo can later detect
  * any unauthorized modifications.
@@ -59,6 +57,22 @@ public class HashGeneratorMojo extends AbstractMojo {
   /** Current Maven project instance. */
   @Parameter(defaultValue = "${project}", readonly = true, required = true)
   private MavenProject project;
+
+  /** If true, skips the execution of the mojo. */
+  @Parameter(property = "ai.integrity.skip", defaultValue = "false")
+  private boolean skip;
+
+  /** Target build directory for central hash files. */
+  @Parameter(defaultValue = "${project.build.directory}", readonly = true, required = true)
+  private String buildDirectory;
+
+  /** If true, Normalizes CRLF to LF in memory before hashing, enabling cross-OS git hashes. */
+  @Parameter(property = "ai.integrity.normalizeLineEndings", defaultValue = "false")
+  private boolean normalizeLineEndings;
+
+  /** Strategy for storing generated hashes (SIDECAR or CENTRAL). */
+  @Parameter(property = "ai.integrity.hashFileMode", defaultValue = "SIDECAR")
+  private HashFileMode hashFileMode;
 
   /** If true, the mojo will only execute in the reactor's execution root project. */
   @Parameter(property = "ai.integrity.executionRootOnly", defaultValue = "false")
@@ -96,12 +110,29 @@ public class HashGeneratorMojo extends AbstractMojo {
   @Parameter(property = "ai.integrity.skipExisting", defaultValue = "false")
   private boolean skipExisting;
 
+  /** If true, natively parse .gitignore files during traversal to auto-exclude paths. */
+  @Parameter(property = "ai.integrity.gitignoreAutoExclude", defaultValue = "false")
+  private boolean gitignoreAutoExclude;
+
   /** Comma-separated directory names to skip during traversal (in addition to {@code target}). */
   @Parameter(property = "ai.integrity.skipDirs", defaultValue = "target,.git,node_modules,.tmp")
   private String skipDirs;
 
+  /** Comma-separated glob patterns for files that MUST be processed, bypassing .gitignore rules. */
+  @Parameter(property = "ai.integrity.forceIncludes", defaultValue = "")
+  private String forceIncludes;
+
+  /** If true, natively hides the generated hash sidecar files across all operating systems. */
+  @Parameter(property = "ai.integrity.hideHashFiles", defaultValue = "true")
+  private boolean hideHashFiles;
+
   @Override
   public void execute() throws MojoExecutionException {
+    if (skip) {
+      getLog().info("Skipping execution.");
+      return;
+    }
+
     if (executionRootOnly && !project.isExecutionRoot()) {
       getLog().info("Skipping HashGeneratorMojo execution in non-root project.");
       return;
@@ -121,31 +152,27 @@ public class HashGeneratorMojo extends AbstractMojo {
     Set<String> skipSet = parseSkipDirs();
     List<PathMatcher> includeMatchers = buildMatchers(basePath, HashUtils.parsePatterns(includes));
     List<PathMatcher> excludeMatchers = buildMatchers(basePath, HashUtils.parsePatterns(excludes));
+    List<PathMatcher> forceIncludeMatchers =
+        buildMatchers(basePath, HashUtils.parsePatterns(forceIncludes));
 
     List<Path> filesToHash = new ArrayList<>();
     try {
       Files.walkFileTree(
           basePath,
-          new SimpleFileVisitor<Path>() {
-            @Override
-            public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
-              if (!dir.equals(basePath)) {
-                String dirName = dir.getFileName().toString();
-                if (skipSet.contains(dirName)) {
-                  getLog().debug("Skipping directory: " + dir);
-                  return FileVisitResult.SKIP_SUBTREE;
-                }
-              }
-              return FileVisitResult.CONTINUE;
-            }
-
+          new GitIgnoreAwareFileVisitor(
+              basePath, gitignoreAutoExclude, skipSet, forceIncludeMatchers, getLog()) {
             @Override
             public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
               Path rel = basePath.relativize(file);
+              boolean gitIgnored = isIgnoredByGit(file);
+
+              if (gitIgnored && !matchesAny(rel, forceIncludeMatchers)) {
+                return FileVisitResult.CONTINUE;
+              }
               if (matchesAny(rel, excludeMatchers)) {
                 return FileVisitResult.CONTINUE;
               }
-              if (matchesAny(rel, includeMatchers)) {
+              if (matchesAny(rel, includeMatchers) || matchesAny(rel, forceIncludeMatchers)) {
                 filesToHash.add(file);
               }
               return FileVisitResult.CONTINUE;
@@ -165,23 +192,57 @@ public class HashGeneratorMojo extends AbstractMojo {
     int hashed = 0;
     int skipped = 0;
 
-    for (Path file : filesToHash) {
-      Path hashFile = file.resolveSibling(file.getFileName() + ext);
-
-      if (skipExisting && Files.exists(hashFile)) {
-        getLog().debug("Skipping existing hash file: " + hashFile);
-        skipped++;
-        continue;
-      }
-
+    if (hashFileMode == HashFileMode.CENTRAL) {
+      Path centralFile = Paths.get(buildDirectory, "ai-integrity" + ext);
       try {
-        String hash = HashUtils.computeHash(file, algorithm);
-        String hashContent = hash + "  " + file.getFileName() + "\n";
-        Files.writeString(hashFile, hashContent);
-        getLog().debug("Hash written: " + hashFile);
-        hashed++;
-      } catch (IOException | NoSuchAlgorithmException e) {
-        getLog().error("Failed to hash " + file + ": " + e.getMessage());
+        Files.createDirectories(centralFile.getParent());
+        StringBuilder sb = new StringBuilder();
+        for (Path file : filesToHash) {
+          try {
+            String hash = HashUtils.computeHash(file, algorithm, normalizeLineEndings);
+            // Use stable relative paths for the central ledger
+            String relPath = basePath.relativize(file).toString().replace('\\', '/');
+            sb.append(hash).append("  ").append(relPath).append("\n");
+            hashed++;
+          } catch (Exception e) {
+            getLog().error("Failed to hash " + file + ": " + e.getMessage());
+          }
+        }
+        Files.writeString(centralFile, sb.toString());
+        getLog().info("Central hash file written: " + centralFile);
+      } catch (IOException e) {
+        throw new MojoExecutionException("Failed to write central hash file: " + centralFile, e);
+      }
+    } else {
+      for (Path file : filesToHash) {
+        String name = file.getFileName().toString();
+        String prefix = (hideHashFiles && !name.startsWith(".")) ? "." : "";
+        Path hashFile = file.resolveSibling(prefix + name + ext);
+
+        if (skipExisting && Files.exists(hashFile)) {
+          getLog().debug("Skipping existing hash file: " + hashFile);
+          skipped++;
+          continue;
+        }
+
+        try {
+          String hash = HashUtils.computeHash(file, algorithm, normalizeLineEndings);
+          String hashContent = hash + "  " + file.getFileName() + "\n";
+          Files.writeString(hashFile, hashContent);
+
+          if (hideHashFiles) {
+            try {
+              Files.setAttribute(hashFile, "dos:hidden", true);
+            } catch (UnsupportedOperationException | IllegalArgumentException ignored) {
+              // Attribute naturally not supported on Mac/Linux configurations
+            }
+          }
+
+          getLog().debug("Hash written: " + hashFile);
+          hashed++;
+        } catch (Exception e) {
+          getLog().error("Failed to hash " + file + ": " + e.getMessage());
+        }
       }
     }
 

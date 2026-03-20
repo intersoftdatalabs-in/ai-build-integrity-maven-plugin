@@ -49,6 +49,7 @@ class HashVerifyMojoTest {
     mojo = new HashVerifyMojo();
     mojo.setLog(log);
     setField(mojo, "project", project);
+    setField(mojo, "failOnError", true);
     setField(mojo, "algorithmBits", 256);
     setField(mojo, "baseDir", tempDir.toString());
     setField(mojo, "outputExtension", "auto");
@@ -65,7 +66,7 @@ class HashVerifyMojoTest {
       // Given
       Path mdFile = tempDir.resolve("AGENTS.md");
       Files.writeString(mdFile, "# AI Agent Instructions");
-      String hash = HashUtils.computeHash(mdFile, "SHA-256");
+      String hash = HashUtils.computeHash(mdFile, "SHA-256", false);
       Files.writeString(tempDir.resolve("AGENTS.md.sha256"), hash + "  AGENTS.md\n");
 
       // When/Then
@@ -119,10 +120,10 @@ class HashVerifyMojoTest {
       Files.writeString(file2, "Skill content");
       Files.writeString(
           tempDir.resolve("AGENTS.md.sha256"),
-          HashUtils.computeHash(file1, "SHA-256") + "  AGENTS.md\n");
+          HashUtils.computeHash(file1, "SHA-256", false) + "  AGENTS.md\n");
       Files.writeString(
           tempDir.resolve("SKILL.md.sha256"),
-          HashUtils.computeHash(file2, "SHA-256") + "  SKILL.md\n");
+          HashUtils.computeHash(file2, "SHA-256", false) + "  SKILL.md\n");
 
       // When/Then
       assertDoesNotThrow(() -> mojo.execute());
@@ -136,7 +137,7 @@ class HashVerifyMojoTest {
       Files.createDirectory(subDir);
       Path skillFile = subDir.resolve("SKILL.md");
       Files.writeString(skillFile, "Original content");
-      String correctHash = HashUtils.computeHash(skillFile, "SHA-256");
+      String correctHash = HashUtils.computeHash(skillFile, "SHA-256", false);
       Files.writeString(subDir.resolve("SKILL.md.sha256"), correctHash + "  SKILL.md\n");
 
       // Tamper
@@ -169,7 +170,7 @@ class HashVerifyMojoTest {
 
       Path mdFile = tempDir.resolve("AGENTS.md");
       Files.writeString(mdFile, "content");
-      String hash = HashUtils.computeHash(mdFile, "SHA-256");
+      String hash = HashUtils.computeHash(mdFile, "SHA-256", false);
       Files.writeString(tempDir.resolve("AGENTS.md.sha256"), hash + "  AGENTS.md\n");
 
       // When/Then
@@ -184,7 +185,7 @@ class HashVerifyMojoTest {
       when(project.getBasedir()).thenReturn(tempDir.toFile());
       Path mdFile = tempDir.resolve("test.md");
       Files.writeString(mdFile, "content");
-      String hash = HashUtils.computeHash(mdFile, "SHA-256");
+      String hash = HashUtils.computeHash(mdFile, "SHA-256", false);
       Files.writeString(tempDir.resolve("test.md.sha256"), hash + "  test.md\n");
 
       // When/Then
@@ -198,7 +199,7 @@ class HashVerifyMojoTest {
       setField(mojo, "algorithmBits", 512);
       Path mdFile = tempDir.resolve("AGENTS.md");
       Files.writeString(mdFile, "content");
-      String hash = HashUtils.computeHash(mdFile, "SHA-512");
+      String hash = HashUtils.computeHash(mdFile, "SHA-512", false);
       Files.writeString(tempDir.resolve("AGENTS.md.sha512"), hash + "  AGENTS.md\n");
 
       // When/Then
@@ -229,7 +230,7 @@ class HashVerifyMojoTest {
       // Given
       Path mdFile = tempDir.resolve("AGENTS.md");
       Files.writeString(mdFile, "content");
-      String hash = HashUtils.computeHash(mdFile, "SHA-256");
+      String hash = HashUtils.computeHash(mdFile, "SHA-256", false);
       // Write hash file with wrong filename
       Files.writeString(tempDir.resolve("AGENTS.md.sha256"), hash + "  WRONG_FILE.md\n");
 
@@ -244,7 +245,7 @@ class HashVerifyMojoTest {
       // Given
       Path mdFile = tempDir.resolve("AGENTS.md");
       Files.writeString(mdFile, "content");
-      String hash = HashUtils.computeHash(mdFile, "SHA-256");
+      String hash = HashUtils.computeHash(mdFile, "SHA-256", false);
       // Hash-only format (no embedded filename)
       Files.writeString(tempDir.resolve("AGENTS.md.sha256"), hash + "\n");
 
