@@ -33,7 +33,86 @@ This ensures supply-chain integrity for AI instructions throughout the build lif
 <version>0.1.4-SNAPSHOT</version>
 ```
 
-## Quick Start
+## Quick Start (Minimal Config)
+
+The most common enterprise setup uses `CENTRAL` ledger mode to eliminate sidecar pollution across the source directory, relying entirely on the plugin's secure defaults.
+
+### Single-Module Project
+
+```xml
+<build>
+    <plugins>
+        <plugin>
+            <groupId>com.intsof</groupId>
+            <artifactId>ai-build-integrity-maven-plugin</artifactId>
+            <version>0.9.0-SNAPSHOT</version>
+            <configuration>
+                <hashFileMode>CENTRAL</hashFileMode>
+            </configuration>
+            <executions>
+                <execution>
+                    <id>generate</id>
+                    <goals><goal>generate-hashes</goal></goals>
+                </execution>
+                <execution>
+                    <id>verify</id>
+                    <goals><goal>verify-hashes</goal></goals>
+                </execution>
+                <execution>
+                    <id>clean</id>
+                    <goals><goal>clean-hashes</goal></goals>
+                </execution>
+            </executions>
+        </plugin>
+    </plugins>
+</build>
+```
+
+### Monorepo (Parent POM)
+
+Add to the parent POM's `<build><plugins>` section. The parent project will secure the entire repository at T=0 natively.
+
+```xml
+<build>
+    <plugins>
+        <plugin>
+            <groupId>com.intsof</groupId>
+            <artifactId>ai-build-integrity-maven-plugin</artifactId>
+            <version>0.9.0-SNAPSHOT</version>
+            <configuration>
+                <hashFileMode>CENTRAL</hashFileMode>
+            </configuration>
+            <executions>
+                <execution>
+                    <id>generate</id>
+                    <goals><goal>generate-hashes</goal></goals>
+                    <configuration>
+                        <!-- Generates hashes for the entire repository ONLY at the root at T=0 -->
+                        <executionRootOnly>true</executionRootOnly>
+                    </configuration>
+                </execution>
+                <execution>
+                    <id>verify</id>
+                    <goals><goal>verify-hashes</goal></goals>
+                    <!-- Verify automatically runs in every child module -->
+                </execution>
+                <execution>
+                    <id>clean</id>
+                    <goals><goal>clean-hashes</goal></goals>
+                    <configuration>
+                        <!-- Cleans the entire repository's hashes only once at the root -->
+                        <executionRootOnly>true</executionRootOnly>
+                    </configuration>
+                </execution>
+            </executions>
+        </plugin>
+    </plugins>
+</build>
+```
+
+---
+
+## Quick Start (Full Options)
 
 Choose the lifecycle placement based on whether your build rewrites protected files such as `AGENTS.md`, `SKILL.md`, or other matched instruction files.
 
@@ -41,7 +120,7 @@ Choose the lifecycle placement based on whether your build rewrites protected fi
 
 Use this setup when your build only reads instruction files, or when tools like Spotless run in check-only mode and do not modify matched files.
 
-### Single-Module Project
+### Single-Module Project (Full Options)
 
 ```xml
 <build>
@@ -118,7 +197,7 @@ Use this setup when your build only reads instruction files, or when tools like 
 </build>
 ```
 
-### Monorepo (Parent POM)
+### Monorepo (Parent POM - Full Options)
 
 Add to the parent POM's `<build><plugins>` section. The parent project will secure the entire repository at T=0 by generating the hashes across all modules. As the long-running reactor build progresses, the child modules will continually verify those hashes to ensure files were not tampered with mid-build:
 
