@@ -1,21 +1,13 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/DECORATION/1.8.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/DECORATION/1.8.0 http://maven.apache.org/xsd/decoration-1.8.0.xsd"
-  name="AI Build Integrity Maven Plugin">
-  <skin>
-    <groupId>org.apache.maven.skins</groupId>
-    <artifactId>maven-fluido-skin</artifactId>
-    <version>2.0.0-M11</version>
-  </skin>
-  <publishDate position="right" format="yyyy-MM-dd" />
-  <version position="right" />
+<project name="AI Build Integrity Maven Plugin">
+  <bannerLeft>
+    <name>AI Build Integrity</name>
+  </bannerLeft>
   <body>
     <menu name="Overview">
       <item name="Introduction" href="index.html"/>
       <item name="Usage" href="usage.html"/>
-      <item name="Goals" href="goals.html"/>
+      <item name="FAQ" href="faq.html"/>
       <item name="Troubleshooting" href="troubleshooting.html"/>
-      <item name="Plugin Info" href="plugin-info.html"/>
     </menu>
     <menu ref="reports"/>
   </body>
