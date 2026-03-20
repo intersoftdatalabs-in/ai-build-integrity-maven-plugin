@@ -22,13 +22,11 @@ All contributors are expected to follow our standard Code of Conduct (be kind, b
    ```bash
    mvn spotless:apply
    ```
-
 4. Run all tests to ensure no regressions:
 
    ```bash
    mvn clean test
    ```
-
 5. Commit your changes with descriptive commit messages.
 6. Push your branch to your fork and open a Pull Request.
 
