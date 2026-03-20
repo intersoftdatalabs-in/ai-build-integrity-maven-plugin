@@ -558,14 +558,21 @@ public class HashVerifyMojo extends AbstractMojo {
    *     [=====>--------------] 5/65 (7%)}
    */
   private String buildReactorProgressBar(int current, int total) {
-    int barWidth = 20;
+    int barWidth = 40;
     int filled = (total > 0) ? (int) Math.round((double) current / total * barWidth) : 0;
     int percent = (total > 0) ? (int) Math.round((double) current / total * 100) : 0;
+
     StringBuilder bar = new StringBuilder();
     for (int i = 0; i < barWidth; i++) {
-      bar.append(i < filled ? '=' : '-');
+      if (i < filled) {
+        bar.append('█'); // Solid block for filled
+      } else if (i == filled && current < total) {
+        bar.append('▒'); // Shaded block for leading edge
+      } else {
+        bar.append('░'); // Light shade for empty
+      }
     }
-    return String.format(
-        "Reactor build integrity: [%s] %d/%d modules (%d%%)", bar, current, total, percent);
+
+    return String.format("Reactor Integrity: |%s| %3d%% [%d/%d]", bar, percent, current, total);
   }
 }
