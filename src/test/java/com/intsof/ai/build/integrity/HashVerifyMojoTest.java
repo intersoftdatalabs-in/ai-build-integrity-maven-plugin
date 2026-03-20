@@ -254,6 +254,59 @@ class HashVerifyMojoTest {
     }
   }
 
+  @Nested
+  @DisplayName("Audit Report")
+  class AuditReportTests {
+
+    @BeforeEach
+    void setUpAudit() throws Exception {
+      setField(mojo, "generateAuditReport", true);
+      setField(mojo, "buildDirectory", tempDir.resolve("target").toString());
+    }
+
+    @Test
+    @DisplayName("should generate audit report by default in target directory")
+    void shouldGenerateReportByDefault() throws Exception {
+      // Given
+      Path mdFile = tempDir.resolve("AGENTS.md");
+      Files.writeString(mdFile, "content");
+      String hash = HashUtils.computeHash(mdFile, "SHA-256", false);
+      Files.writeString(tempDir.resolve("AGENTS.md.sha256"), hash + "  AGENTS.md\n");
+
+      // When
+      mojo.execute();
+
+      // Then
+      Path reportFile = tempDir.resolve("target").resolve("ai-integrity-report.json");
+      assertTrue(Files.exists(reportFile), "Audit report should exist");
+      String content = Files.readString(reportFile);
+      assertTrue(
+          content.contains("\"status\": \"VERIFIED\""), "Report should contain verified status");
+    }
+
+    @Test
+    @DisplayName("should override audit report path with centralReportFile")
+    void shouldOverrideReportPath() throws Exception {
+      // Given
+      Path customReport = tempDir.resolve("custom-report.json");
+      setField(mojo, "centralReportFile", customReport.toString());
+
+      Path mdFile = tempDir.resolve("AGENTS.md");
+      Files.writeString(mdFile, "content");
+      String hash = HashUtils.computeHash(mdFile, "SHA-256", false);
+      Files.writeString(tempDir.resolve("AGENTS.md.sha256"), hash + "  AGENTS.md\n");
+
+      // When
+      mojo.execute();
+
+      // Then
+      assertTrue(Files.exists(customReport), "Custom audit report should exist at " + customReport);
+      assertFalse(
+          Files.exists(tempDir.resolve("target").resolve("ai-integrity-report.json")),
+          "Default report should NOT exist");
+    }
+  }
+
   private static void setField(Object target, String fieldName, Object value) throws Exception {
     Field field = findField(target.getClass(), fieldName);
     field.setAccessible(true);
