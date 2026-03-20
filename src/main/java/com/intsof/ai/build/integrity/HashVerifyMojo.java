@@ -130,6 +130,15 @@ public class HashVerifyMojo extends AbstractMojo {
   @Parameter(property = "ai.integrity.hideHashFiles", defaultValue = "true")
   private boolean hideHashFiles;
 
+  /**
+   * Explicit path to the central hash ledger file. When set, overrides the default {@code
+   * target/ai-integrity.<ext>} location and enables child modules in a monorepo to verify against
+   * the root module's single shared ledger. Example: {@code
+   * ${maven.multiModuleProjectDirectory}/target/ai-integrity.sha256}
+   */
+  @Parameter(property = "ai.integrity.centralHashFile")
+  private String centralHashFile;
+
   @Override
   public void execute() throws MojoExecutionException {
     if (skip || skipAlt) {
@@ -158,14 +167,17 @@ public class HashVerifyMojo extends AbstractMojo {
     List<String> auditEntries = new ArrayList<>();
 
     if (hashFileMode == HashFileMode.CENTRAL) {
-      Path centralFile = Paths.get(buildDirectory, "ai-integrity" + ext);
-      if (!Files.exists(centralFile)) {
-        getLog().warn("Central hash file not found: " + centralFile);
+      Path centralFilePath =
+          (centralHashFile != null && !centralHashFile.isEmpty())
+              ? Paths.get(centralHashFile)
+              : Paths.get(buildDirectory, "ai-integrity" + ext);
+      if (!Files.exists(centralFilePath)) {
+        getLog().warn("Central hash file not found: " + centralFilePath);
         return;
       }
 
       try {
-        List<String> lines = Files.readAllLines(centralFile);
+        List<String> lines = Files.readAllLines(centralFilePath);
         if (lines.isEmpty()) {
           getLog().warn("Central hash file is empty.");
           return;
@@ -222,7 +234,8 @@ public class HashVerifyMojo extends AbstractMojo {
           }
         }
       } catch (IOException | NoSuchAlgorithmException e) {
-        throw new MojoExecutionException("Failed to verify central hashes from " + centralFile, e);
+        throw new MojoExecutionException(
+            "Failed to verify central hashes from " + centralFilePath, e);
       }
     } else {
       Set<String> skipSet = parseSkipDirs();

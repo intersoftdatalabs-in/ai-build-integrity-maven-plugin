@@ -111,6 +111,13 @@ public class HashCleanMojo extends AbstractMojo {
   @Parameter(property = "ai.integrity.hideHashFiles", defaultValue = "true")
   private boolean hideHashFiles;
 
+  /**
+   * Explicit path to the central hash ledger file. When set, overrides the default {@code
+   * target/ai-integrity.<ext>} location.
+   */
+  @Parameter(property = "ai.integrity.centralHashFile")
+  private String centralHashFile;
+
   @Override
   public void execute() throws MojoExecutionException {
     if (skip || skipAlt) {
@@ -137,15 +144,19 @@ public class HashCleanMojo extends AbstractMojo {
     int failed = 0;
 
     if (hashFileMode == HashFileMode.CENTRAL) {
-      Path centralFile = Paths.get(buildDirectory, "ai-integrity" + ext);
-      if (Files.exists(centralFile)) {
+      Path centralFilePath =
+          (centralHashFile != null && !centralHashFile.isEmpty())
+              ? Paths.get(centralHashFile)
+              : Paths.get(buildDirectory, "ai-integrity" + ext);
+      if (Files.exists(centralFilePath)) {
         try {
-          Files.delete(centralFile);
-          getLog().debug("Deleted central hash file: " + centralFile);
+          Files.delete(centralFilePath);
+          getLog().debug("Deleted central hash file: " + centralFilePath);
           deleted++;
         } catch (IOException e) {
           getLog()
-              .error("Failed to delete central hash file " + centralFile + ": " + e.getMessage());
+              .error(
+                  "Failed to delete central hash file " + centralFilePath + ": " + e.getMessage());
           failed++;
         }
       } else {

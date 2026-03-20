@@ -41,14 +41,22 @@ For a standard Maven application, attaching the plugin is incredibly simple. It 
 
 ## 2. Large Monorepos
 
-Monorepos possess extreme complexity, as they can sometimes contain hundreds of localized modules.
+In a Maven reactor build there is no lifecycle event that fires once after all modules have finished
+building. The only reliable hook for mid-reactor integrity enforcement is each module's own lifecycle.
 
-Add the following to your **root parent POM's** `<build><pluginManagement>` and `<plugins>` section.
+The correct architecture is therefore:
 
-> **Critical:** Both `executionRootOnly` and `baseDir` must be in the **shared `<configuration>`** block,
-> not inside individual `<execution>` blocks. Placing `executionRootOnly` only on `generate-hashes`
-> while leaving it off `verify-hashes` causes verification to run once per child module — each
-> looking in the wrong `target/` directory for the central hash file.
+|       Goal        |                Scope                 |                                    When                                    |
+|-------------------|--------------------------------------|----------------------------------------------------------------------------|
+| `generate-hashes` | Root only (`executionRootOnly=true`) | `VALIDATE` — seals files before the build begins                           |
+| `verify-hashes`   | **Every module**                     | `TEST` — re-verifies the sealed ledger just before each module is packaged |
+| `clean-hashes`    | Root only (`executionRootOnly=true`) | `CLEAN` — removes the ledger once                                          |
+
+Because `verify-hashes` must read the ledger from every child module, you must use `centralHashFile`
+to point all modules at the single shared ledger written by the root. Without it, each child module
+looks in its own `target/` directory, finds nothing, and silently skips.
+
+Add the following to your **root parent POM's** `<build><pluginManagement>` and `<plugins>` sections:
 
 ```xml
 <build>
@@ -60,32 +68,40 @@ Add the following to your **root parent POM's** `<build><pluginManagement>` and 
                 <version>0.9.0-SNAPSHOT</version>
                 <configuration>
                     <hashFileMode>CENTRAL</hashFileMode>
-                    <!-- Scan the entire repository tree, not just the module that Maven is in -->
+                    <!-- Scan the entire repo from the root, not from each module's basedir -->
                     <baseDir>${maven.multiModuleProjectDirectory}</baseDir>
-                    <!-- CRITICAL: Run ALL goals exactly once at the root, not in each child module -->
-                    <executionRootOnly>true</executionRootOnly>
-                    <!-- Include your proprietary rulebook files -->
+                    <!-- All modules share a single ledger in the root target/ directory -->
+                    <centralHashFile>${maven.multiModuleProjectDirectory}/target/ai-integrity.sha256</centralHashFile>
                     <includes>**/*.md,**/*.json</includes>
                 </configuration>
                 <executions>
                     <execution>
                         <id>generate</id>
                         <goals><goal>generate-hashes</goal></goals>
+                        <!-- Seal all files exactly once, at the very start of the reactor build -->
+                        <configuration>
+                            <executionRootOnly>true</executionRootOnly>
+                        </configuration>
                     </execution>
                     <execution>
                         <id>verify</id>
+                        <!-- No executionRootOnly: fires in EVERY module before it is packaged -->
                         <goals><goal>verify-hashes</goal></goals>
                     </execution>
                     <execution>
                         <id>clean</id>
                         <goals><goal>clean-hashes</goal></goals>
+                        <!-- Delete the shared ledger exactly once -->
+                        <configuration>
+                            <executionRootOnly>true</executionRootOnly>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>
         </plugins>
     </pluginManagement>
     <plugins>
-        <!-- Activates the pluginManagement configuration above -->
+        <!-- Activates the pluginManagement configuration above for the reactor -->
         <plugin>
             <groupId>com.intsof</groupId>
             <artifactId>ai-build-integrity-maven-plugin</artifactId>
@@ -93,6 +109,11 @@ Add the following to your **root parent POM's** `<build><pluginManagement>` and 
     </plugins>
 </build>
 ```
+
+> **Note:** If you only need a lightweight smoke-test and do not care about mid-reactor tampering
+> (e.g. a CI pipeline with no third-party build steps), you may set `executionRootOnly=true` on
+> the verify execution as well. This verifies once during the root module's `TEST` phase and skips
+> all child modules entirely, but provides no protection after that point.
 
 ---
 
