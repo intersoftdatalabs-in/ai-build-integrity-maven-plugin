@@ -34,7 +34,17 @@ Integrate Dev-Sec-Ops seamlessly without becoming a blocker for your engineering
 
 ## ⚡ Quick Start
 
-For a typical enterprise repository, simply attach the plugin without complex XML configurations. The plugin uses secure default timings to lockdown your repo at `initialize` and verify hashes at `test`.
+Pick the configuration that matches your project structure.
+
+---
+
+<details open>
+<summary><b>📦 Single-Module Project</b></summary>
+<br>
+
+Add the plugin to your `pom.xml`. The plugin seals your AI instruction files at `initialize`
+and verifies them at `test`. A centralized ledger is written to `target/` — no sidecar files
+in your source tree.
 
 ```xml
 <plugin>
@@ -42,23 +52,59 @@ For a typical enterprise repository, simply attach the plugin without complex XM
     <artifactId>ai-build-integrity-maven-plugin</artifactId>
     <version>0.9.0-SNAPSHOT</version>
     <configuration>
-        <!-- Use a centralized ledger to avoid source-tree pollution -->
+        <!-- Centralized ledger: no sidecar files in your source tree -->
         <hashFileMode>CENTRAL</hashFileMode>
     </configuration>
     <executions>
         <execution>
             <goals>
-                <!-- Lock the repo down at T=0 -->
                 <goal>generate-hashes</goal>
-                <!-- Verify integrity just before packaging -->
                 <goal>verify-hashes</goal>
-                <!-- Safely delete the ledger when cleaning -->
                 <goal>clean-hashes</goal>
             </goals>
         </execution>
     </executions>
 </plugin>
 ```
+
+</details>
+
+---
+
+<details>
+<summary><b>🏗️ Monorepo / Multi-Module Project</b></summary>
+<br>
+
+Add the plugin **once** to your **root parent POM**. Set `executionRootOnly=true` so the
+scan runs exactly one time from the repository root, not repeated for every submodule.
+Omitting this flag on a large monorepo is the #1 cause of slow builds.
+
+```xml
+<plugin>
+    <groupId>com.intsof</groupId>
+    <artifactId>ai-build-integrity-maven-plugin</artifactId>
+    <version>0.9.0-SNAPSHOT</version>
+    <configuration>
+        <!-- Centralized ledger written to the root target/ directory -->
+        <hashFileMode>CENTRAL</hashFileMode>
+        <!-- CRITICAL: Only run from the repo root, not once per module -->
+        <executionRootOnly>true</executionRootOnly>
+        <!-- Scan from the root of the entire repository -->
+        <baseDir>${maven.multiModuleProjectDirectory}</baseDir>
+    </configuration>
+    <executions>
+        <execution>
+            <goals>
+                <goal>generate-hashes</goal>
+                <goal>verify-hashes</goal>
+                <goal>clean-hashes</goal>
+            </goals>
+        </execution>
+    </executions>
+</plugin>
+```
+
+</details>
 
 ---
 
