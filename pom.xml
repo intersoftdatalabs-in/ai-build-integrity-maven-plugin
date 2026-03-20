@@ -245,6 +245,7 @@
                     <useReleaseProfile>false</useReleaseProfile>
                     <releaseProfiles>release</releaseProfiles>
                     <goals>deploy</goals>
+                    <preparationGoals>spotless:apply clean verify</preparationGoals>
                 </configuration>
             </plugin>
             <plugin>

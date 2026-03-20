@@ -12,3 +12,4 @@
 - Suggest improvements to the project by creating detailed issues in the GitHub repository.
 - Report bugs by creating detailed issues in the GitHub repository.
 - When implementing new features or fixing bugs, create a feature branch and submit a pull request for review.
+
