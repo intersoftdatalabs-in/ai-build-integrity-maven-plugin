@@ -43,9 +43,7 @@ However, some configuration files are strictly Git-ignored but are fiercely crit
 ```xml
 <configuration>
     <gitignoreAutoExclude>true</gitignoreAutoExclude>
-    <forceIncludes>
-        <forceInclude>src/main/resources/.env*</forceInclude>
-    </forceIncludes>
+    <forceIncludes>src/main/resources/.env*</forceIncludes>
 </configuration>
 ```
 

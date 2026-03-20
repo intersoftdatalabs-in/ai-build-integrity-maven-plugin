@@ -161,9 +161,7 @@ To leverage every configuration parameter exposed by the plugin engine, consult 
     <gitignoreAutoExclude>true</gitignoreAutoExclude>
 
     <!-- OVERWRITES gitignore exceptions (i.e. if you WANT to protect .env but it is gitignored) -->
-    <forceIncludes>
-        <forceInclude>src/main/resources/.env*</forceInclude>
-    </forceIncludes>
+    <forceIncludes>src/main/resources/.env*</forceIncludes>
 
     <!-- CENTRAL outputs to target/ai-integrity.sha256, SIDECAR outputs to local hidden files -->
     <hashFileMode>CENTRAL</hashFileMode>
