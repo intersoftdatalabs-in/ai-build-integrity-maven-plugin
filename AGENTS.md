@@ -1,0 +1,14 @@
+- Maven Site documentation is for end-users of the plugin.
+- CONTRIBUTING.md is for developers of the plugin.
+- Java 11 compatibility is required for the plugin.
+- The plugin should be fast and lightweight for both single-module projects and large multi-module projects.
+- Runtime depencies should be avoided. Use Maven API dependencies instead.
+- All generated code must have a matching unit test that compiles and passes.
+- The plugin should be self-documenting through the use of Javadocs and inline comments.
+- Java compiler and Javadoc warnings must be fixed.
+- The README.md and all end-user facing documentation should be short, professional, and easy to understand.
+- Our goal with end-user content is to attract Dev/SecOps users to our project and driving adoption.
+- Plugin code must be secure and performant for code bases of all sizes.
+- Suggest improvements to the project by creating detailed issues in the GitHub repository.
+- Report bugs by creating detailed issues in the GitHub repository.
+- When implementing new features or fixing bugs, create a feature branch and submit a pull request for review.

@@ -11,8 +11,8 @@
     <description>Maven plugin that generates and verifies cryptographic hashes for AI instruction files
         (AGENTS.md, SKILL.md, etc.), ensuring that nothing changes AI instructions once the build
         has begun or once the artifact is shipped. Designed to be fast and lightweight for both
-        single-module projects and large monorepos.</description>
-    <url>https://github.com/intersoftdatalabs-in/ai-build-integrity-maven-plugin</url>
+        single-module projects and large multi-module projects.</description>
+    <url>https://intersoftdatalabs-in.github.io/ai-build-integrity-maven-plugin/</url>
 
     <organization>
         <name>Intersoft Data Labs, Inc.</name>
@@ -48,7 +48,7 @@
 
     <scm>
         <connection>scm:git:https://github.com/intersoftdatalabs-in/ai-build-integrity-maven-plugin.git</connection>
-        <developerConnection>scm:git:git@github.com:intersoftdatalabs-in/ai-build-integrity-maven-plugin.git</developerConnection>
+        <developerConnection>scm:git:git@github.com-intersoft:intersoftdatalabs-in/ai-build-integrity-maven-plugin.git</developerConnection>
         <url>https://github.com/intersoftdatalabs-in/ai-build-integrity-maven-plugin</url>
     </scm>
 
