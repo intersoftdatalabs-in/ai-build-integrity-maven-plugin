@@ -75,12 +75,14 @@ in your source tree.
 <summary><b>🏗️ Monorepo / Multi-Module Project</b></summary>
 <br>
 
-Add the plugin **once** to your **root parent POM's `<pluginManagement>`** block. Set `executionRootOnly=true`
-and `baseDir` in the **shared `<configuration>`** — not inside individual executions.
+Maven has no lifecycle event that fires once when the entire reactor finishes. To catch mid-build
+tampering you must verify in **every module**. The correct architecture is:
 
-> ⚠️ Putting `executionRootOnly` only on the `generate-hashes` execution (and leaving it off `verify-hashes`)
-> causes verification to run once per child module, each searching the wrong `target/` directory for the
-> central hash file, and finding nothing. Both must share the root configuration.
+- `generate-hashes` — seals all files once at `VALIDATE` on the **root only**
+- `verify-hashes` — re-verifies in **every module** at `TEST` before packaging
+- `clean-hashes` — deletes the ledger once on the **root only**
+
+`centralHashFile` is required to point all child modules at the single shared ledger the root writes.
 
 ```xml
 <build>
@@ -91,32 +93,35 @@ and `baseDir` in the **shared `<configuration>`** — not inside individual exec
                 <artifactId>ai-build-integrity-maven-plugin</artifactId>
                 <version>0.9.0-SNAPSHOT</version>
                 <configuration>
-                    <!-- Centralized ledger written to the root target/ directory -->
                     <hashFileMode>CENTRAL</hashFileMode>
-                    <!-- Scan the entire repository, not just the current module -->
+                    <!-- Scan the entire repo, not just the current module's basedir -->
                     <baseDir>${maven.multiModuleProjectDirectory}</baseDir>
-                    <!-- CRITICAL: All goals run exactly once at the root, not per child module -->
-                    <executionRootOnly>true</executionRootOnly>
+                    <!-- All modules share one ledger written to root target/ -->
+                    <centralHashFile>${maven.multiModuleProjectDirectory}/target/ai-integrity.sha256</centralHashFile>
                 </configuration>
                 <executions>
                     <execution>
                         <id>generate</id>
                         <goals><goal>generate-hashes</goal></goals>
+                        <!-- Seal once at reactor start -->
+                        <configuration><executionRootOnly>true</executionRootOnly></configuration>
                     </execution>
                     <execution>
                         <id>verify</id>
+                        <!-- No executionRootOnly — fires in every module before it is packaged -->
                         <goals><goal>verify-hashes</goal></goals>
                     </execution>
                     <execution>
                         <id>clean</id>
                         <goals><goal>clean-hashes</goal></goals>
+                        <!-- Delete ledger once -->
+                        <configuration><executionRootOnly>true</executionRootOnly></configuration>
                     </execution>
                 </executions>
             </plugin>
         </plugins>
     </pluginManagement>
     <plugins>
-        <!-- Activates the pluginManagement configuration above -->
         <plugin>
             <groupId>com.intsof</groupId>
             <artifactId>ai-build-integrity-maven-plugin</artifactId>

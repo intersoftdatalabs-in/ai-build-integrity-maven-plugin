@@ -133,6 +133,14 @@ public class HashGeneratorMojo extends AbstractMojo {
   @Parameter(property = "ai.integrity.hideHashFiles", defaultValue = "true")
   private boolean hideHashFiles;
 
+  /**
+   * Explicit path to the central hash ledger file. When set, overrides the default {@code
+   * target/ai-integrity.<ext>} location and enables child modules in a monorepo to write to the
+   * same single shared ledger as the root module.
+   */
+  @Parameter(property = "ai.integrity.centralHashFile")
+  private String centralHashFile;
+
   @Override
   public void execute() throws MojoExecutionException {
     if (skip || skipAlt) {
@@ -223,9 +231,12 @@ public class HashGeneratorMojo extends AbstractMojo {
     long hashStart = System.currentTimeMillis();
 
     if (hashFileMode == HashFileMode.CENTRAL) {
-      Path centralFile = Paths.get(buildDirectory, "ai-integrity" + ext);
+      Path centralFilePath =
+          (centralHashFile != null && !centralHashFile.isEmpty())
+              ? Paths.get(centralHashFile)
+              : Paths.get(buildDirectory, "ai-integrity" + ext);
       try {
-        Files.createDirectories(centralFile.getParent());
+        Files.createDirectories(centralFilePath.getParent());
         StringBuilder sb = new StringBuilder();
         for (Path file : filesToHash) {
           try {
@@ -238,10 +249,11 @@ public class HashGeneratorMojo extends AbstractMojo {
             getLog().error("Failed to hash " + file + ": " + e.getMessage());
           }
         }
-        Files.writeString(centralFile, sb.toString());
-        getLog().info("Central hash file written: " + centralFile);
+        Files.writeString(centralFilePath, sb.toString());
+        getLog().info("Central hash file written: " + centralFilePath);
       } catch (IOException e) {
-        throw new MojoExecutionException("Failed to write central hash file: " + centralFile, e);
+        throw new MojoExecutionException(
+            "Failed to write central hash file: " + centralFilePath, e);
       }
     } else {
       for (Path file : filesToHash) {
