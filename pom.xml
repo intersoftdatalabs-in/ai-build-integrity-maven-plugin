@@ -184,7 +184,7 @@
                         <excludes>
                             <exclude>target/**</exclude>
                         </excludes>
-                        <flexmark />
+                        <flexmark/>
                     </markdown>
                 </configuration>
                 <executions>
@@ -247,6 +247,7 @@
                     <releaseProfiles>release</releaseProfiles>
                     <goals>deploy</goals>
                     <preparationGoals>spotless:apply clean verify</preparationGoals>
+                    <completionGoals>spotless:apply</completionGoals>
                 </configuration>
             </plugin>
             <plugin>
