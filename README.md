@@ -18,6 +18,7 @@ The AI Build Integrity plugin solves this problem by applying a **cryptographic,
 ## 🚀 For Developers: Zero-Friction Integrity
 
 We know you hate plugins that slow down your build or litter your workspace with garbage files.
+
 - **Blazing Fast:** Written with raw NIO `Files.walkFileTree` and a 64KiB streaming buffer. It recursively seals a 500-module monorepo in milliseconds.
 - **Zero Pollution:** Uses a clean, centralized ledger inside your `target/` directory instead of vomiting `.sha` sidecar files all over your pristine source tree.
 - **Cross-OS Native:** Automatically sanitizes Windows/Linux line-endings (`\r\n` -> `\n`) in-memory, ensuring Mac and Windows developers generate identical cryptographic fingerprints.
@@ -26,6 +27,7 @@ We know you hate plugins that slow down your build or litter your workspace with
 ## 🔒 For Security Teams: Automated Compliance
 
 Integrate Dev-Sec-Ops seamlessly without becoming a blocker for your engineering teams.
+
 - **SIEM Ready:** The plugin automatically emits a JSON "Bill of Materials" Audit Report (`ai-integrity-report.json`) detailing the verified state of every single file in the artifact. Ingest this report natively into Splunk, DataDog, or your preferred SIEM.
 - **Soft-Fail Rollouts:** Deploy the plugin globally to thousands of repositories in "Auditing Mode" (`failOnError=false`). You'll receive red-alert logs when tampering occurs, but the builds will safely continue until you are ready to enforce hard-blocking.
 - **GitIgnore Aware:** Automatically respects downstream `.gitignore` rules, preventing accidental security breaches in temporary or ignored sub-directories.
@@ -46,11 +48,13 @@ Add the plugin to your `pom.xml`. The plugin seals your AI instruction files at 
 and verifies them at `test`. A centralized ledger is written to `target/` — no sidecar files
 in your source tree.
 
+The plugin is available on Maven Central as of version 0.9.0.
+
 ```xml
 <plugin>
     <groupId>com.intsof</groupId>
     <artifactId>ai-build-integrity-maven-plugin</artifactId>
-    <version>0.9.0-SNAPSHOT</version>
+    <version>0.9.0</version>
     <configuration>
         <!-- Centralized ledger: no sidecar files in your source tree -->
         <hashFileMode>CENTRAL</hashFileMode>
