@@ -48,7 +48,7 @@
 
     <scm>
         <connection>scm:git:https://github.com/intersoftdatalabs-in/ai-build-integrity-maven-plugin.git</connection>
-        <developerConnection>scm:git:git@github.com:intersoftdatalabs-in/ai-build-integrity-maven-plugin.git</developerConnection>
+        <developerConnection>scm:git:git@github.com-intersoft:intersoftdatalabs-in/ai-build-integrity-maven-plugin.git</developerConnection>
         <tag>v0.9.0</tag>
         <url>https://github.com/intersoftdatalabs-in/ai-build-integrity-maven-plugin</url>
     </scm>
