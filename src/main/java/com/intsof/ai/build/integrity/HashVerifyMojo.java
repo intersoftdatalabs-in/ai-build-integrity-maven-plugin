@@ -89,7 +89,7 @@ public class HashVerifyMojo extends AbstractMojo {
   private boolean normalizeLineEndings;
 
   /** If true, generates a machine-readable JSON bill of materials for SIEM systems. */
-  @Parameter(property = "ai.integrity.generateAuditReport", defaultValue = "false")
+  @Parameter(property = "ai.integrity.generateAuditReport", defaultValue = "true")
   private boolean generateAuditReport;
 
   /** If false, validation failures will only log errors and will not break the build. */
@@ -143,6 +143,13 @@ public class HashVerifyMojo extends AbstractMojo {
    */
   @Parameter(property = "ai.integrity.centralHashFile")
   private String centralHashFile;
+
+  /**
+   * Explicit path to the central audit report file. When set, overrides the default {@code
+   * target/ai-integrity-report.json} location.
+   */
+  @Parameter(property = "ai.integrity.centralReportFile")
+  private String centralReportFile;
 
   @Override
   public void execute() throws MojoExecutionException {
@@ -419,7 +426,10 @@ public class HashVerifyMojo extends AbstractMojo {
     }
 
     if (generateAuditReport) {
-      Path reportFile = Paths.get(buildDirectory, "ai-integrity-report.json");
+      Path reportFile =
+          (centralReportFile != null && !centralReportFile.isEmpty())
+              ? Paths.get(centralReportFile)
+              : Paths.get(buildDirectory, "ai-integrity-report.json");
       try {
         Files.createDirectories(reportFile.getParent());
         StringBuilder report = new StringBuilder();

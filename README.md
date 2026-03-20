@@ -98,6 +98,8 @@ tampering you must verify in **every module**. The correct architecture is:
                     <baseDir>${maven.multiModuleProjectDirectory}</baseDir>
                     <!-- All modules share one ledger written to root target/ -->
                     <centralHashFile>${maven.multiModuleProjectDirectory}/target/ai-integrity.sha256</centralHashFile>
+                    <!-- All modules share one audit report written to root target/ -->
+                    <centralReportFile>${maven.multiModuleProjectDirectory}/target/ai-integrity-report.json</centralReportFile>
                 </configuration>
                 <executions>
                     <execution>

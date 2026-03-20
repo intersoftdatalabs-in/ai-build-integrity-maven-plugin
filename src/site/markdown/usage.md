@@ -72,6 +72,8 @@ Add the following to your **root parent POM's** `<build><pluginManagement>` and 
                     <baseDir>${maven.multiModuleProjectDirectory}</baseDir>
                     <!-- All modules share a single ledger in the root target/ directory -->
                     <centralHashFile>${maven.multiModuleProjectDirectory}/target/ai-integrity.sha256</centralHashFile>
+                    <!-- All modules share a single audit report in the root target/ directory -->
+                    <centralReportFile>${maven.multiModuleProjectDirectory}/target/ai-integrity-report.json</centralReportFile>
                     <includes>**/*.md,**/*.json</includes>
                 </configuration>
                 <executions>
@@ -178,8 +180,11 @@ To leverage every configuration parameter exposed by the plugin engine, consult 
     <!-- (VERIFY ONLY) Bypass build failures and just log warnings -->
     <failOnError>true</failOnError>
 
-    <!-- (VERIFY ONLY) Emits the Dev-Sec-Ops SIEM json payload mapping -->
-    <generateAuditReport>false</generateAuditReport>
+    <!-- (VERIFY ONLY) Emits the Dev-Sec-Ops SIEM json payload mapping (default: true) -->
+    <generateAuditReport>true</generateAuditReport>
+
+    <!-- (VERIFY ONLY) Explicit path to the central audit report file -->
+    <centralReportFile>${maven.multiModuleProjectDirectory}/target/ai-integrity-report.json</centralReportFile>
 </configuration>
 ```
 
