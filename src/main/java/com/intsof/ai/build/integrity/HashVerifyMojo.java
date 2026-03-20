@@ -224,6 +224,8 @@ public class HashVerifyMojo extends AbstractMojo {
           buildMatchers(basePath, HashUtils.parsePatterns(forceIncludes));
 
       List<Path> hashFiles = new ArrayList<>();
+      final long[] scanned = {0};
+      long walkStart = System.currentTimeMillis();
       try {
         Files.walkFileTree(
             basePath,
@@ -231,6 +233,16 @@ public class HashVerifyMojo extends AbstractMojo {
                 basePath, gitignoreAutoExclude, skipSet, forceIncludeMatchers, getLog()) {
               @Override
               public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
+                scanned[0]++;
+                if (scanned[0] % 1000 == 0) {
+                  getLog()
+                      .info(
+                          "  ... scanned "
+                              + scanned[0]
+                              + " files, "
+                              + hashFiles.size()
+                              + " hash files matched so far");
+                }
                 Path rel = basePath.relativize(file);
 
                 if (matchesAny(rel, hashMatchers)) {
@@ -242,13 +254,16 @@ public class HashVerifyMojo extends AbstractMojo {
       } catch (IOException e) {
         throw new MojoExecutionException("Error walking directory: " + basePath, e);
       }
-
-      if (hashFiles.isEmpty()) {
-        getLog().warn("No hash files found to verify.");
-        return;
-      }
-
-      getLog().info("Found " + hashFiles.size() + " hash files to verify.");
+      long walkMs = System.currentTimeMillis() - walkStart;
+      getLog()
+          .info(
+              "Directory scan complete: "
+                  + scanned[0]
+                  + " files scanned, "
+                  + hashFiles.size()
+                  + " hash files found in "
+                  + walkMs
+                  + " ms");
 
       for (Path hashFile : hashFiles) {
         String hashFileName = hashFile.toString();

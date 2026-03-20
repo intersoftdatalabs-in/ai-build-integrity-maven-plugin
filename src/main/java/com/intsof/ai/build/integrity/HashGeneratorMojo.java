@@ -156,6 +156,8 @@ public class HashGeneratorMojo extends AbstractMojo {
         buildMatchers(basePath, HashUtils.parsePatterns(forceIncludes));
 
     List<Path> filesToHash = new ArrayList<>();
+    final long[] scanned = {0};
+    long walkStart = System.currentTimeMillis();
     try {
       Files.walkFileTree(
           basePath,
@@ -163,6 +165,16 @@ public class HashGeneratorMojo extends AbstractMojo {
               basePath, gitignoreAutoExclude, skipSet, forceIncludeMatchers, getLog()) {
             @Override
             public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
+              scanned[0]++;
+              if (scanned[0] % 1000 == 0) {
+                getLog()
+                    .info(
+                        "  ... scanned "
+                            + scanned[0]
+                            + " files, "
+                            + filesToHash.size()
+                            + " matched so far");
+              }
               Path rel = basePath.relativize(file);
               boolean gitIgnored = isIgnoredByGit(file);
 
@@ -181,6 +193,16 @@ public class HashGeneratorMojo extends AbstractMojo {
     } catch (IOException e) {
       throw new MojoExecutionException("Error walking directory: " + basePath, e);
     }
+    long walkMs = System.currentTimeMillis() - walkStart;
+    getLog()
+        .info(
+            "Directory scan complete: "
+                + scanned[0]
+                + " files scanned, "
+                + filesToHash.size()
+                + " matched in "
+                + walkMs
+                + " ms");
 
     if (filesToHash.isEmpty()) {
       getLog().info("No files found to hash.");
@@ -191,6 +213,7 @@ public class HashGeneratorMojo extends AbstractMojo {
 
     int hashed = 0;
     int skipped = 0;
+    long hashStart = System.currentTimeMillis();
 
     if (hashFileMode == HashFileMode.CENTRAL) {
       Path centralFile = Paths.get(buildDirectory, "ai-integrity" + ext);
@@ -246,7 +269,18 @@ public class HashGeneratorMojo extends AbstractMojo {
       }
     }
 
-    getLog().info("Hash generation complete: " + hashed + " created, " + skipped + " skipped.");
+    long hashMs = System.currentTimeMillis() - hashStart;
+    getLog()
+        .info(
+            "Hash generation complete: "
+                + hashed
+                + " created, "
+                + skipped
+                + " skipped in "
+                + hashMs
+                + " ms (total wall time: "
+                + (walkMs + hashMs)
+                + " ms)");
   }
 
   /**

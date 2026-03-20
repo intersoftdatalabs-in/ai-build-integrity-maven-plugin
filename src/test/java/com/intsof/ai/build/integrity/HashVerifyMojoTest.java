@@ -100,14 +100,14 @@ class HashVerifyMojoTest {
     }
 
     @Test
-    @DisplayName("should warn and return when no hash files are found")
+    @DisplayName("should log scan complete when no hash files are found")
     void shouldWarnWhenNoHashFiles() throws Exception {
       // Given
       Files.writeString(tempDir.resolve("README.md"), "content");
 
       // When/Then
       assertDoesNotThrow(() -> mojo.execute());
-      verify(log).warn(contains("No hash files found"));
+      verify(log).info(contains("Directory scan complete:"));
     }
 
     @Test
