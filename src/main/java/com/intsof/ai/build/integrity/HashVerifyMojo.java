@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
@@ -63,6 +64,10 @@ public class HashVerifyMojo extends AbstractMojo {
   /** Current Maven project instance. */
   @Parameter(defaultValue = "${project}", readonly = true, required = true)
   private MavenProject project;
+
+  /** Current Maven session, used to compute reactor progress. */
+  @Parameter(defaultValue = "${session}", readonly = true, required = true)
+  private MavenSession session;
 
   /**
    * If true, skips the execution of the mojo. Accepts both {@code -Dai.integrity.skip=true} and the
@@ -155,7 +160,13 @@ public class HashVerifyMojo extends AbstractMojo {
     String ext = resolveExtension();
 
     Path basePath = resolveBasePath();
-    getLog().info("Verifying " + algorithm + " hashes for AI resources in: " + basePath);
+
+    boolean isReactorBuild = session != null && session.getProjects().size() > 1;
+    if (isReactorBuild) {
+      getLog().info("Repo-wide integrity checkpoint for: " + project.getArtifactId());
+    } else {
+      getLog().info("Verifying " + algorithm + " hashes for AI resources in: " + basePath);
+    }
 
     if (!Files.exists(basePath)) {
       getLog().warn("Base directory does not exist: " + basePath);
@@ -165,6 +176,7 @@ public class HashVerifyMojo extends AbstractMojo {
     int verified = 0;
     int failed = 0;
     List<String> auditEntries = new ArrayList<>();
+    long verifyStart = System.currentTimeMillis();
 
     if (hashFileMode == HashFileMode.CENTRAL) {
       Path centralFilePath =
@@ -381,7 +393,30 @@ public class HashVerifyMojo extends AbstractMojo {
       }
     }
 
-    getLog().info("Hash verification complete: " + verified + " verified, " + failed + " failed.");
+    long verifyMs = System.currentTimeMillis() - verifyStart;
+    getLog()
+        .info(
+            "Hash verification complete: "
+                + verified
+                + " verified, "
+                + failed
+                + " failed in "
+                + verifyMs
+                + " ms");
+
+    // Emit reactor progress bar when running inside a multi-module build
+    if (session != null && session.getProjects().size() > 1) {
+      List<MavenProject> allProjects = session.getProjects();
+      int total = allProjects.size();
+      int current = 0;
+      for (int i = 0; i < total; i++) {
+        if (allProjects.get(i).getArtifactId().equals(project.getArtifactId())) {
+          current = i + 1;
+          break;
+        }
+      }
+      getLog().info(buildReactorProgressBar(current, total));
+    }
 
     if (generateAuditReport) {
       Path reportFile = Paths.get(buildDirectory, "ai-integrity-report.json");
@@ -512,5 +547,25 @@ public class HashVerifyMojo extends AbstractMojo {
       }
     }
     return false;
+  }
+
+  /**
+   * Renders an ASCII reactor progress bar for multi-module builds.
+   *
+   * @param current the 1-based index of the current module in the reactor
+   * @param total the total number of modules in the reactor
+   * @return a formatted progress bar string, e.g. {@code Reactor build integrity:
+   *     [=====>--------------] 5/65 (7%)}
+   */
+  private String buildReactorProgressBar(int current, int total) {
+    int barWidth = 20;
+    int filled = (total > 0) ? (int) Math.round((double) current / total * barWidth) : 0;
+    int percent = (total > 0) ? (int) Math.round((double) current / total * 100) : 0;
+    StringBuilder bar = new StringBuilder();
+    for (int i = 0; i < barWidth; i++) {
+      bar.append(i < filled ? '=' : '-');
+    }
+    return String.format(
+        "Reactor build integrity: [%s] %d/%d modules (%d%%)", bar, current, total, percent);
   }
 }
