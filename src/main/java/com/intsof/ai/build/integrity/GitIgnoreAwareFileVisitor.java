@@ -105,6 +105,7 @@ public abstract class GitIgnoreAwareFileVisitor extends SimpleFileVisitor<Path> 
       // If forceIncludes are provided, we cannot safely prune the ignored branch natively
       // because deeply nested files may have been explicitly overridden.
       if (forceIncludeMatchers == null || forceIncludeMatchers.isEmpty()) {
+        log.debug("Pruning gitignored directory: " + basePath.relativize(dir));
         return FileVisitResult.SKIP_SUBTREE;
       }
     }

@@ -41,47 +41,54 @@ For a standard Maven application, attaching the plugin is incredibly simple. It 
 
 ## 2. Large Monorepos
 
-Monorepos possess extreme complexity, as they can sometimes contain hundreds of localized modules. The plugin intelligently scales into long-running reactor builds.
+Monorepos possess extreme complexity, as they can sometimes contain hundreds of localized modules.
 
-Add the following to your Parent POM's `<build><plugins>` section.
+Add the following to your **root parent POM's** `<build><pluginManagement>` and `<plugins>` section.
 
-**How it works seamlessly:** The parent securely traverses and generates hashes at the very start of the build (T=0). As Maven builds each of the 500 child modules over hours, the child modules locally execute quick hash verifications. If a rogue process modifies an instruction file halfway through the pipeline, the build brutally fails.
+> **Critical:** Both `executionRootOnly` and `baseDir` must be in the **shared `<configuration>`** block,
+> not inside individual `<execution>` blocks. Placing `executionRootOnly` only on `generate-hashes`
+> while leaving it off `verify-hashes` causes verification to run once per child module — each
+> looking in the wrong `target/` directory for the central hash file.
 
 ```xml
 <build>
+    <pluginManagement>
+        <plugins>
+            <plugin>
+                <groupId>com.intsof</groupId>
+                <artifactId>ai-build-integrity-maven-plugin</artifactId>
+                <version>0.9.0-SNAPSHOT</version>
+                <configuration>
+                    <hashFileMode>CENTRAL</hashFileMode>
+                    <!-- Scan the entire repository tree, not just the module that Maven is in -->
+                    <baseDir>${maven.multiModuleProjectDirectory}</baseDir>
+                    <!-- CRITICAL: Run ALL goals exactly once at the root, not in each child module -->
+                    <executionRootOnly>true</executionRootOnly>
+                    <!-- Include your proprietary rulebook files -->
+                    <includes>**/*.md,**/*.json</includes>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>generate</id>
+                        <goals><goal>generate-hashes</goal></goals>
+                    </execution>
+                    <execution>
+                        <id>verify</id>
+                        <goals><goal>verify-hashes</goal></goals>
+                    </execution>
+                    <execution>
+                        <id>clean</id>
+                        <goals><goal>clean-hashes</goal></goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </pluginManagement>
     <plugins>
+        <!-- Activates the pluginManagement configuration above -->
         <plugin>
             <groupId>com.intsof</groupId>
             <artifactId>ai-build-integrity-maven-plugin</artifactId>
-            <version>0.9.0-SNAPSHOT</version>
-            <configuration>
-                <hashFileMode>CENTRAL</hashFileMode>
-                <!-- Include your proprietary rulebook files -->
-                <includes>**/*.md,**/*.json</includes>
-            </configuration>
-            <executions>
-                <execution>
-                    <id>generate</id>
-                    <goals><goal>generate-hashes</goal></goals>
-                    <configuration>
-                        <!-- Hash ONLY once at the root directory level across the whole repo -->
-                        <executionRootOnly>true</executionRootOnly>
-                    </configuration>
-                </execution>
-                <execution>
-                    <id>verify</id>
-                    <goals><goal>verify-hashes</goal></goals>
-                    <!-- Missing executionRootOnly means it safely verifies on localized child modules -->
-                </execution>
-                <execution>
-                    <id>clean</id>
-                    <goals><goal>clean-hashes</goal></goals>
-                    <configuration>
-                        <!-- Deletes the central target/ ledger only once when root is cleaned -->
-                        <executionRootOnly>true</executionRootOnly>
-                    </configuration>
-                </execution>
-            </executions>
         </plugin>
     </plugins>
 </build>
