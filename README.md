@@ -75,33 +75,54 @@ in your source tree.
 <summary><b>🏗️ Monorepo / Multi-Module Project</b></summary>
 <br>
 
-Add the plugin **once** to your **root parent POM**. Set `executionRootOnly=true` so the
-scan runs exactly one time from the repository root, not repeated for every submodule.
-Omitting this flag on a large monorepo is the #1 cause of slow builds.
+Add the plugin **once** to your **root parent POM's `<pluginManagement>`** block. Set `executionRootOnly=true`
+and `baseDir` in the **shared `<configuration>`** — not inside individual executions.
+
+> ⚠️ Putting `executionRootOnly` only on the `generate-hashes` execution (and leaving it off `verify-hashes`)
+> causes verification to run once per child module, each searching the wrong `target/` directory for the
+> central hash file, and finding nothing. Both must share the root configuration.
 
 ```xml
-<plugin>
-    <groupId>com.intsof</groupId>
-    <artifactId>ai-build-integrity-maven-plugin</artifactId>
-    <version>0.9.0-SNAPSHOT</version>
-    <configuration>
-        <!-- Centralized ledger written to the root target/ directory -->
-        <hashFileMode>CENTRAL</hashFileMode>
-        <!-- CRITICAL: Only run from the repo root, not once per module -->
-        <executionRootOnly>true</executionRootOnly>
-        <!-- Scan from the root of the entire repository -->
-        <baseDir>${maven.multiModuleProjectDirectory}</baseDir>
-    </configuration>
-    <executions>
-        <execution>
-            <goals>
-                <goal>generate-hashes</goal>
-                <goal>verify-hashes</goal>
-                <goal>clean-hashes</goal>
-            </goals>
-        </execution>
-    </executions>
-</plugin>
+<build>
+    <pluginManagement>
+        <plugins>
+            <plugin>
+                <groupId>com.intsof</groupId>
+                <artifactId>ai-build-integrity-maven-plugin</artifactId>
+                <version>0.9.0-SNAPSHOT</version>
+                <configuration>
+                    <!-- Centralized ledger written to the root target/ directory -->
+                    <hashFileMode>CENTRAL</hashFileMode>
+                    <!-- Scan the entire repository, not just the current module -->
+                    <baseDir>${maven.multiModuleProjectDirectory}</baseDir>
+                    <!-- CRITICAL: All goals run exactly once at the root, not per child module -->
+                    <executionRootOnly>true</executionRootOnly>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>generate</id>
+                        <goals><goal>generate-hashes</goal></goals>
+                    </execution>
+                    <execution>
+                        <id>verify</id>
+                        <goals><goal>verify-hashes</goal></goals>
+                    </execution>
+                    <execution>
+                        <id>clean</id>
+                        <goals><goal>clean-hashes</goal></goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </pluginManagement>
+    <plugins>
+        <!-- Activates the pluginManagement configuration above -->
+        <plugin>
+            <groupId>com.intsof</groupId>
+            <artifactId>ai-build-integrity-maven-plugin</artifactId>
+        </plugin>
+    </plugins>
+</build>
 ```
 
 </details>

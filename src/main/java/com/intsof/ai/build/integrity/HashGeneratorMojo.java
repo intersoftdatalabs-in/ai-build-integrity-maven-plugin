@@ -58,9 +58,16 @@ public class HashGeneratorMojo extends AbstractMojo {
   @Parameter(defaultValue = "${project}", readonly = true, required = true)
   private MavenProject project;
 
-  /** If true, skips the execution of the mojo. */
+  /**
+   * If true, skips the execution of the mojo. Accepts both {@code -Dai.integrity.skip=true} and the
+   * Maven-conventional {@code -Dskip.ai.integrity=true}.
+   */
   @Parameter(property = "ai.integrity.skip", defaultValue = "false")
   private boolean skip;
+
+  /** Alternate Maven-conventional skip flag (e.g. -Dskip.ai.integrity=true). */
+  @Parameter(property = "skip.ai.integrity", defaultValue = "false")
+  private boolean skipAlt;
 
   /** Target build directory for central hash files. */
   @Parameter(defaultValue = "${project.build.directory}", readonly = true, required = true)
@@ -128,7 +135,7 @@ public class HashGeneratorMojo extends AbstractMojo {
 
   @Override
   public void execute() throws MojoExecutionException {
-    if (skip) {
+    if (skip || skipAlt) {
       getLog().info("Skipping execution.");
       return;
     }
