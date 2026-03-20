@@ -60,8 +60,8 @@ building. The only reliable hook for mid-reactor integrity enforcement is each m
 
 The correct architecture is therefore:
 
-| Goal              | Scope                                | When                                                                       |
-| ----------------- | ------------------------------------ | -------------------------------------------------------------------------- |
+|       Goal        |                Scope                 |                                    When                                    |
+|-------------------|--------------------------------------|----------------------------------------------------------------------------|
 | `generate-hashes` | Root only (`executionRootOnly=true`) | `VALIDATE` — seals files before the build begins                           |
 | `verify-hashes`   | **Every module**                     | `TEST` — re-verifies the sealed ledger just before each module is packaged |
 | `clean-hashes`    | Root only (`executionRootOnly=true`) | `CLEAN` — removes the ledger once                                          |
@@ -199,3 +199,4 @@ To leverage every configuration parameter exposed by the plugin engine, consult 
     <centralReportFile>${maven.multiModuleProjectDirectory}/target/ai-integrity-report.json</centralReportFile>
 </configuration>
 ```
+
