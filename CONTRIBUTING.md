@@ -22,20 +22,22 @@ All contributors are expected to follow our standard Code of Conduct (be kind, b
    ```bash
    mvn spotless:apply
    ```
-4. Run all tests to ensure no regressions:
+4. Run all tests to ensure no regressions and verify there are no new compiler or Javadoc warnings:
 
    ```bash
-   mvn clean test
+   mvn clean verify
    ```
-5. Commit your changes with descriptive commit messages.
-6. Push your branch to your fork and open a Pull Request.
+5. Update any relevant documentation (e.g., `README.md`, usage guides, or Javadocs).
+6. Commit your changes with descriptive commit messages.
+7. Push your branch to your fork and open a Pull Request.
 
 ### Pull Request Process
 
 1. Provide a clear description of the problem being solved or the feature being added.
-2. Link to the relevant issue if one exists.
-3. A maintainer will review your pull request and may request changes.
-4. Once approved, your pull request will be merged into the `main` branch.
+2. Complete the checklist in our [Pull Request Template](.github/PULL_REQUEST_TEMPLATE.md).
+3. Link to the relevant issue if one exists.
+4. A maintainer will review your pull request and may request changes.
+5. Once approved, your pull request will be merged into the `main` branch.
 
 ## Development Environment
 
