@@ -37,8 +37,9 @@ All contributors are expected to follow our standard Code of Conduct (be kind, b
 1. Provide a clear description of the problem being solved or the feature being added.
 2. Complete the checklist in our [Pull Request Template](.github/PULL_REQUEST_TEMPLATE.md).
 3. Link to the relevant issue if one exists.
-4. A maintainer will review your pull request and may request changes.
-5. Once approved, your pull request will be merged into the `main` branch.
+4. **Interim Development**: We encourage the use of feature branches and draft Pull Requests to allow for iterative development and early review of interim work. All non-trivial changes must be reviewed before merging to `main`.
+5. A maintainer will review your pull request and may request changes.
+6. Once approved, your pull request will be merged into the `main` branch.
 
 ## Development Environment
 
