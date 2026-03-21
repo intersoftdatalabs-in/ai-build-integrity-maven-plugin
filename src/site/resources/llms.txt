@@ -1,5 +1,11 @@
 # AI Build Integrity Maven Plugin
 
+## Primary Resources
+- **Main Documentation**: [README.md](../../../README.md)
+- **Source of Truth**: [AGENTS.md](../../../AGENTS.md)
+- **Contribution Guidelines**: [CONTRIBUTING.md](../../../CONTRIBUTING.md)
+- **Security Policy**: [SECURITY.md](../../../SECURITY.md)
+
 ## Overview
 The AI Build Integrity Maven Plugin ensures cryptographic integrity for AI instruction files (e.g., `AGENTS.md`, `SKILL.md`) and critical configurations in Maven projects. It seals these files at the start of a build and verifies them before packaging, preventing tampering.
 
