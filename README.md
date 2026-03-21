@@ -22,7 +22,7 @@ The AI Build Integrity plugin solves this problem by applying a **cryptographic,
 
 We know you hate plugins that slow down your build or litter your workspace with garbage files.
 
-- **Blazing Fast:** Written with raw NIO `Files.walkFileTree` and a 64KiB streaming buffer. It recursively seals a 500-module monorepo in milliseconds.
+- **Blazing Fast:** Written with raw NIO `Files.walkFileTree` and a 64KiB streaming buffer. It recursively seals a 500-module multi-module project in milliseconds.
 - **Zero Pollution:** Uses a clean, centralized ledger inside your `target/` directory instead of vomiting `.sha` sidecar files all over your pristine source tree.
 - **Cross-OS Native:** Automatically sanitizes Windows/Linux line-endings (`\r\n` -> `\n`) in-memory, ensuring Mac and Windows developers generate identical cryptographic fingerprints.
 - **Opt-Out Any Time:** Need to quickly iterate locally? Just run `mvn install -Dai.integrity.skip=true` to skip protections seamlessly.
@@ -79,7 +79,7 @@ The plugin is available on Maven Central as of version 0.9.0.
 ---
 
 <details>
-<summary><b>🏗️ Monorepo / Multi-Module Project</b></summary>
+<summary><b>🏗️ Multi-Module Project</b></summary>
 <br>
 
 Maven has no lifecycle event that fires once when the entire reactor finishes. To catch mid-build
@@ -145,9 +145,9 @@ tampering you must verify in **every module**. The correct architecture is:
 
 ## 📚 Documentation & Guides
 
-The AI Build Integrity Plugin handles everything from massive Monorepos to complex `spotless:apply` interactions gracefully.
+The AI Build Integrity Plugin handles everything from massive Multi-Module Projects to complex `spotless:apply` interactions gracefully.
 
-- **[Usage Guide](src/site/markdown/usage.md):** Detailed setup for Single-Module and Monorepos (Parent POMs).
+- **[Usage Guide](src/site/markdown/usage.md):** Detailed setup for Single-Module and Multi-Module Projects (Parent POMs).
 - **[FAQ](src/site/markdown/faq.md):** Common questions regarding Git check-ins, formatting plugins, and best practices.
 - **[Troubleshooting](src/site/markdown/troubleshooting.md):** Solutions for common errors, skipped subtrees, and execution ordering.
 

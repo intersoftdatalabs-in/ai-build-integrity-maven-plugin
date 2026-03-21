@@ -53,7 +53,7 @@ For a standard Maven application, attaching the plugin is incredibly simple. It 
 
 ---
 
-## 2. Large Monorepos
+## 2. Large Multi-Module Projects
 
 In a Maven reactor build there is no lifecycle event that fires once after all modules have finished
 building. The only reliable hook for mid-reactor integrity enforcement is each module's own lifecycle.

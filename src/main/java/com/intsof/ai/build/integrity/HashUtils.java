@@ -28,7 +28,7 @@ import java.util.Set;
 /**
  * Shared utility methods for hash computation, pattern parsing, and hex encoding used by both the
  * generate and verify mojos. All methods are designed to be fast and allocation-light for use in
- * large monorepo traversals.
+ * large multi-module project traversals.
  */
 public final class HashUtils {
 
