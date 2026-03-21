@@ -1,15 +1,1 @@
-# AI Build Integrity Maven Plugin
-
-# This file points to the hosted version of the project's LLM-readable documentation.
-# By pointing to the GitHub Pages site, we ensure that AI agents always have access to the 
-# most current, rendered documentation including the latest examples and guidelines.
-
-For the full specification, configuration details, and AI Assistant Guidelines, please refer to:
-- https://intersoftdatalabs-in.github.io/ai-build-integrity-maven-plugin/llms.txt
-
-## Primary Resources
-
-- **Main Documentation**: [README.md](README.md)
-- **Source of Truth**: [AGENTS.md](AGENTS.md)
-- **Contribution Guidelines**: [CONTRIBUTING.md](CONTRIBUTING.md)
-- **Security Policy**: [SECURITY.md](SECURITY.md)
+- See GitHub Pages: https://intersoftdatalabs-in.github.io/ai-build-integrity-maven-plugin/llms.txt
