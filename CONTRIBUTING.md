@@ -164,6 +164,14 @@ This will automatically:
 Remember to still verify and manually publish on the Central Portal since `autoPublish` is
 `false`.
 
+## Maintenance Policy
+
+This project is actively maintained. We ensure that:
+- Dependencies are updated weekly via **Dependabot**.
+- Security vulnerabilities are prioritized and addressed immediately.
+- The project follows a semantic versioning release cycle for new features and bug fixes.
+- All incoming issues and pull requests are reviewed by maintainers in a timely manner.
+
 ## License
 
 By contributing, you agree that your contributions will be licensed under the project's [Apache License, Version 2.0](LICENSE).
