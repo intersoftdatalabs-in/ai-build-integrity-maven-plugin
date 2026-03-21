@@ -4,6 +4,9 @@
 
 [![Maven Central](https://img.shields.io/maven-central/v/com.intsof/ai-build-integrity-maven-plugin)](https://central.sonatype.com/artifact/com.intsof/ai-build-integrity-maven-plugin)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![Build](https://github.com/intersoftdatalabs-in/ai-build-integrity-maven-plugin/actions/workflows/maven.yml/badge.svg)](https://github.com/intersoftdatalabs-in/ai-build-integrity-maven-plugin/actions/workflows/maven.yml)
+[![Test Coverage](https://img.shields.io/codecov/c/github/intersoftdatalabs-in/ai-build-integrity-maven-plugin)](https://codecov.io/gh/intersoftdatalabs-in/ai-build-integrity-maven-plugin)
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/<PROJECT_ID>/badge)](https://www.bestpractices.dev/projects/<PROJECT_ID>)
 
 </div>
 
