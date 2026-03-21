@@ -50,7 +50,8 @@ import org.apache.maven.project.MavenProject;
  * tampered with between the generate phase and the verification phase.
  *
  * <p><b>Performance:</b> Uses {@code Files.walkFileTree} for a single-pass directory traversal with
- * directory pruning. Handles both single-module projects and large monorepos efficiently.
+ * directory pruning. Handles both single-module projects and large multi-module projects
+ * efficiently.
  */
 @Mojo(name = "verify-hashes", defaultPhase = LifecyclePhase.TEST, requiresProject = true)
 public class HashVerifyMojo extends AbstractMojo {
@@ -137,8 +138,8 @@ public class HashVerifyMojo extends AbstractMojo {
 
   /**
    * Explicit path to the central hash ledger file. When set, overrides the default {@code
-   * target/ai-integrity.<ext>} location and enables child modules in a monorepo to verify against
-   * the root module's single shared ledger. Example: {@code
+   * target/ai-integrity.<ext>} location and enables child modules in a multi-module project to
+   * verify against the root module's single shared ledger. Example: {@code
    * ${maven.multiModuleProjectDirectory}/target/ai-integrity.sha256}
    */
   @Parameter(property = "ai.integrity.centralHashFile")

@@ -19,7 +19,7 @@ This ensures comprehensive supply-chain integrity for AI instructions without re
 
 ## Engineering Performance
 
-* **Blazing Fast**: Uses raw NIO `Files.walkFileTree` with static path pruning (e.g., `target`, `.git`, `node_modules` are completely bypassed) and a 64 KiB streaming buffer. It recursively seals massive monorepos in milliseconds.
+* **Blazing Fast**: Uses raw NIO `Files.walkFileTree` with static path pruning (e.g., `target`, `.git`, `node_modules` are completely bypassed) and a 64 KiB streaming buffer. It recursively seals massive multi-module projects in milliseconds.
 * **Cross-OS Native**: Automatically sanitizes Windows/Linux line-endings (`\r\n` -> `\n`) in-memory, ensuring Mac and Windows developers generate identical cryptographic fingerprints.
 * **Zero Pollution**: Uses a centralized ledger inside your `target/` directory instead of littering your source tree with sidecar files.
 * **SIEM Auditable**: Optionally dumps JSON integrity maps (`ai-integrity-report.json`) for effortless Dev-Sec-Ops integration.

@@ -49,7 +49,7 @@ import org.apache.maven.project.MavenProject;
  *
  * <p><b>Performance:</b> Uses {@code Files.walkFileTree} for a single-pass directory traversal with
  * directory pruning, a 64 KiB streaming hash buffer, and a lookup-table hex encoder. Handles both
- * single-module projects and large monorepos efficiently.
+ * single-module projects and large multi-module projects efficiently.
  */
 @Mojo(name = "generate-hashes", defaultPhase = LifecyclePhase.VALIDATE, requiresProject = true)
 public class HashGeneratorMojo extends AbstractMojo {
@@ -135,8 +135,8 @@ public class HashGeneratorMojo extends AbstractMojo {
 
   /**
    * Explicit path to the central hash ledger file. When set, overrides the default {@code
-   * target/ai-integrity.<ext>} location and enables child modules in a monorepo to write to the
-   * same single shared ledger as the root module.
+   * target/ai-integrity.<ext>} location and enables child modules in a multi-module project to
+   * write to the same single shared ledger as the root module.
    */
   @Parameter(property = "ai.integrity.centralHashFile")
   private String centralHashFile;
