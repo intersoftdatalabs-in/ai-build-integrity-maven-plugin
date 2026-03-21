@@ -10,8 +10,9 @@ All contributors are expected to follow our standard Code of Conduct (be kind, b
 
 ### Reporting Issues
 
-1. Check the [Issue Tracker](https://github.com/intersoftdatalabs-in/ai-build-integrity-maven-plugin/issues) to see if the issue has already been reported.
-2. If it hasn't, open a new issue. Provide as much detail as possible, including your environment, your `hashFileMode` configuration, and steps to reproduce.
+1. **Language**: We provide documentation in English and accept bug reports and comments in English.
+2. Check the [Issue Tracker](https://github.com/intersoftdatalabs-in/ai-build-integrity-maven-plugin/issues) to see if the issue has already been reported.
+3. If it hasn't, open a new issue. Provide as much detail as possible, including your environment, your `hashFileMode` configuration, and steps to reproduce.
 
 ### Making Changes
 

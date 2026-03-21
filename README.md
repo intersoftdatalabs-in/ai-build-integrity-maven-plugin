@@ -148,6 +148,7 @@ tampering you must verify in **every module**. The correct architecture is:
 The AI Build Integrity Plugin handles everything from massive Multi-Module Projects to complex `spotless:apply` interactions gracefully.
 
 - **[Usage Guide](src/site/markdown/usage.md):** Detailed setup for Single-Module and Multi-Module Projects (Parent POMs).
+- **English Language**: All documentation is provided in English, and we accept issues and pull requests in English.
 - **[FAQ](src/site/markdown/faq.md):** Common questions regarding Git check-ins, formatting plugins, and best practices.
 - **[Troubleshooting](src/site/markdown/troubleshooting.md):** Solutions for common errors, skipped subtrees, and execution ordering.
 
