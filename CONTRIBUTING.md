@@ -171,6 +171,8 @@ This project is actively maintained. We ensure that:
 - Dependencies are updated weekly via **Dependabot**.
 - Security vulnerabilities are prioritized and addressed immediately.
 - The project follows a **Semantic Versioning (SemVer)** release cycle for all public releases.
+- **Two-Factor Authentication (2FA)** is enforced for all maintainers with repository write access.
+- All release tags and published artifacts are **cryptographically signed** using GPG.
 - All incoming issues and pull requests are reviewed by maintainers in a timely manner.
 
 ## License
