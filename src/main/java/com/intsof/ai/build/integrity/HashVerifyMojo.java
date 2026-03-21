@@ -310,17 +310,7 @@ public class HashVerifyMojo extends AbstractMojo {
         int extIndex = hashFileName.lastIndexOf(ext);
         Path sourceFile = Paths.get(hashFileName.substring(0, extIndex));
 
-        if (!Files.exists(sourceFile)) {
-          Path fileNamePath = sourceFile.getFileName();
-          if (fileNamePath != null && fileNamePath.toString().startsWith(".")) {
-            String originalName = fileNamePath.toString().substring(1);
-            Path alternateSource = sourceFile.resolveSibling(originalName);
-            if (Files.exists(alternateSource)) {
-              sourceFile = alternateSource;
-            }
-          }
-        }
-
+        Path relPath = basePath.relativize(sourceFile);
         if (!Files.exists(sourceFile)) {
           getLog().error("Source file missing for hash: " + sourceFile);
           failed++;
@@ -328,7 +318,7 @@ public class HashVerifyMojo extends AbstractMojo {
             auditEntries.add(
                 String.format(
                     "    {\n      \"file\": \"%s\",\n      \"status\": \"MISSING\",\n      \"hash\": \"null\"\n    }",
-                    sourceFile.getFileName()));
+                    relPath));
           }
           continue;
         }
@@ -372,26 +362,22 @@ public class HashVerifyMojo extends AbstractMojo {
           String computedHash = HashUtils.computeHash(sourceFile, algorithm, normalizeLineEndings);
 
           if (storedHash.equals(computedHash)) {
-            getLog().debug("Verified: " + sourceFile.getFileName());
+            getLog().debug("Verified: " + relPath);
             verified++;
             if (generateAuditReport) {
               auditEntries.add(
                   String.format(
                       "    {\n      \"file\": \"%s\",\n      \"status\": \"VERIFIED\",\n      \"hash\": \"%s\"\n    }",
-                      sourceFile.getFileName(), computedHash));
+                      relPath, computedHash));
             }
           } else {
-            getLog()
-                .error(
-                    "HASH MISMATCH: "
-                        + sourceFile.getFileName()
-                        + " - file may have been tampered with!");
+            getLog().error("HASH MISMATCH: " + relPath + " - file may have been tampered with!");
             failed++;
             if (generateAuditReport) {
               auditEntries.add(
                   String.format(
                       "    {\n      \"file\": \"%s\",\n      \"status\": \"TAMPERED\",\n      \"hash\": \"%s\"\n    }",
-                      sourceFile.getFileName(), computedHash));
+                      relPath, computedHash));
             }
           }
         } catch (IOException | NoSuchAlgorithmException e) {
