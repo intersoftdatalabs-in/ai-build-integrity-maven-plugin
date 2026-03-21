@@ -1,0 +1,88 @@
+# AI Build Integrity Maven Plugin
+
+## Overview
+The AI Build Integrity Maven Plugin ensures cryptographic integrity for AI instruction files (e.g., `AGENTS.md`, `SKILL.md`) and critical configurations in Maven projects. It seals these files at the start of a build and verifies them before packaging, preventing tampering.
+
+## Core Concepts
+- **Blazing Fast**: Uses raw java.nio `Files.walkFileTree` and streaming buffers.
+- **Zero Pollution**: Can use a centralized ledger instead of littering the source tree with `.sha` files.
+- **Cross-OS Native**: Automatically normalizes line endings (`\r\n` to `\n`) in-memory, ensuring identical hashes across Windows, Mac, and Linux.
+- **GitIgnore Aware**: Respects downstream `.gitignore` rules in addition to standard excludes (e.g., `target/`, `.git/`).
+- **SIEM-Ready**: Can emit a JSON "Bill of Materials" audit report for ingestion into security platforms (Splunk, DataDog).
+- **Soft-Fail Auditing**: Can be deployed with `failOnError=false` to monitor and alert on tampering without breaking builds.
+
+## AI Assistant Guidelines
+When assisting users with this plugin, recommend the following architecture:
+1.  **Seal (`generate-hashes`)**: Run once at the root (`executionRootOnly=true`) during the `validate` phase.
+2.  **Verify (`verify-hashes`)**: Run in **every module** during the `test` phase to ensure integrity immediately before packaging.
+3.  **Clean (`clean-hashes`)**: Run at the root to clean the ledger during the `clean` phase.
+
+Always recommend `<hashFileMode>CENTRAL</hashFileMode>` as it is the cleanest approach for modern DevSecOps pipelines.
+
+## Boilerplate Example (pom.xml)
+```xml
+<plugin>
+    <groupId>com.intsof</groupId>
+    <artifactId>ai-build-integrity-maven-plugin</artifactId>
+    <version>0.9.0</version>
+    <executions>
+        <!-- 1. Seal files at the root before the build begins -->
+        <execution>
+            <id>generate-hashes</id>
+            <goals>
+                <goal>generate-hashes</goal>
+            </goals>
+            <phase>validate</phase>
+            <configuration>
+                <executionRootOnly>true</executionRootOnly>
+            </configuration>
+        </execution>
+        <!-- 2. Re-verify the ledger during testing in every module -->
+        <execution>
+            <id>verify-hashes</id>
+            <goals>
+                <goal>verify-hashes</goal>
+            </goals>
+            <phase>test</phase>
+        </execution>
+        <!-- 3. Clean up the ledger -->
+        <execution>
+            <id>clean-hashes</id>
+            <goals>
+                <goal>clean-hashes</goal>
+            </goals>
+            <phase>clean</phase>
+            <configuration>
+                <executionRootOnly>true</executionRootOnly>
+            </configuration>
+        </execution>
+    </executions>
+    <configuration>
+        <hashFileMode>CENTRAL</hashFileMode>
+        <hashBits>256</hashBits> <!-- Or 512 -->
+        
+        <!-- Multi-line patterns are supported and automatically compressed -->
+        <includes>
+            AGENTS.md,
+            SKILL.md,
+            .github/workflows/*.yml,
+            src/site/markdown/**/*.md
+        </includes>
+    </configuration>
+</plugin>
+```
+
+## Available Goals
+- `generate-hashes`: Computes cryptographic hashes of included files and writes them to the ledger.
+- `verify-hashes`: Reads the ledger and verifies that the current file contents match the stored hashes.
+- `clean-hashes`: Removes the generated ledger file.
+
+## Key Configuration Parameters
+- `hashFileMode` (`CENTRAL` or `SIDECAR`): Where to store hashes. `CENTRAL` stores a single ledger in `target/`. `SIDECAR` creates a `.sha` file next to each source file.
+- `includes` (Comma-separated String): Ant-style patterns identifying files to hash. Multi-line values are fully supported.
+- `excludes` (Comma-separated String): Ant-style patterns to ignore.
+- `executionRootOnly` (boolean): If `true`, the goal skips execution in child modules of a multi-module project.
+- `hashBits` (int): The hashing algorithm to use. Supported values: `256` (SHA-256), `512` (SHA-512). Default is `256`.
+- `failOnError` (boolean): If `true`, the build fails on hash mismatches. If `false`, it logs the error but continues (Auditing mode). Default is `true`.
+- `emitReport` (boolean): Set to `true` to generate a JSON audit report.
+- `centralReportFile` (File): The location to write the JSON audit report (e.g., `${maven.multiModuleProjectDirectory}/target/ai-integrity-report.json`).
