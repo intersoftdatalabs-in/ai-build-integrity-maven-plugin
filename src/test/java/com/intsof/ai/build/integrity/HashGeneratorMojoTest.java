@@ -247,6 +247,166 @@ class HashGeneratorMojoTest {
     }
   }
 
+  @Nested
+  @DisplayName("Central Mode Tests")
+  class CentralModeTests {
+
+    @BeforeEach
+    void setUpCentral() throws Exception {
+      setField(mojo, "hashFileMode", HashFileMode.CENTRAL);
+      setField(mojo, "centralHashFile", tempDir.resolve("ai-integrity.sha256").toString());
+      setField(mojo, "buildDirectory", tempDir.resolve("target").toString());
+    }
+
+    @Test
+    @DisplayName("should generate a central ledger file")
+    void shouldGenerateCentralLedger() throws Exception {
+      Path mdFile = tempDir.resolve("AGENTS.md");
+      Files.writeString(mdFile, "content");
+
+      mojo.execute();
+
+      Path centralFile = tempDir.resolve("ai-integrity.sha256");
+      assertTrue(Files.exists(centralFile));
+      String content = Files.readString(centralFile);
+      assertTrue(content.contains("AGENTS.md"));
+      assertFalse(Files.exists(tempDir.resolve("AGENTS.md.sha256")), "Should not create sidecar");
+    }
+
+    @Test
+    @DisplayName("should use default central ledger path if none is specified")
+    void shouldUseDefaultCentralLedger() throws Exception {
+      setField(mojo, "centralHashFile", "");
+      Path mdFile = tempDir.resolve("AGENTS.md");
+      Files.writeString(mdFile, "content");
+
+      mojo.execute();
+
+      Path defaultCentralFile = tempDir.resolve("target").resolve("ai-integrity.sha256");
+      assertTrue(Files.exists(defaultCentralFile));
+    }
+  }
+
+  @Nested
+  @DisplayName("Skip and Reactor Tests")
+  class SkipAndReactorTests {
+
+    @Test
+    @DisplayName("should skip execution when skip property is true")
+    void shouldSkipWhenSkipIsTrue() throws Exception {
+      setField(mojo, "skip", true);
+      mojo.execute();
+      verify(log).info("Skipping execution.");
+    }
+
+    @Test
+    @DisplayName("should skip execution when skipAlt property is true")
+    void shouldSkipWhenSkipAltIsTrue() throws Exception {
+      setField(mojo, "skipAlt", true);
+      mojo.execute();
+      verify(log).info("Skipping execution.");
+    }
+
+    @Test
+    @DisplayName("should skip execution in non-root project when executionRootOnly is true")
+    void shouldSkipInNonRootProject() throws Exception {
+      setField(mojo, "executionRootOnly", true);
+      when(project.isExecutionRoot()).thenReturn(false);
+      mojo.execute();
+      verify(log).info("Skipping HashGeneratorMojo execution in non-root project.");
+    }
+
+    @Test
+    @DisplayName("should hide hash files when hideHashFiles is true")
+    void shouldHideHashFiles() throws Exception {
+      setField(mojo, "hideHashFiles", true);
+      Path mdFile = tempDir.resolve("AGENTS.md");
+      Files.writeString(mdFile, "content");
+
+      mojo.execute();
+
+      assertTrue(Files.exists(tempDir.resolve(".AGENTS.md.sha256")));
+    }
+  }
+
+  @Nested
+  @DisplayName("Configuration Edge Case Tests")
+  class ConfigurationEdgeCaseTests {
+
+    @Test
+    @DisplayName("should use custom output extension")
+    void shouldUseCustomOutputExtension() throws Exception {
+      setField(mojo, "outputExtension", ".customhash");
+      Path mdFile = tempDir.resolve("AGENTS.md");
+      Files.writeString(mdFile, "content");
+
+      assertDoesNotThrow(() -> mojo.execute());
+
+      assertTrue(Files.exists(tempDir.resolve("AGENTS.md.customhash")));
+    }
+
+    @Test
+    @DisplayName("should use project basedir when baseDir is empty")
+    void shouldUseProjectBasedir() throws Exception {
+      setField(mojo, "baseDir", "");
+      when(project.getBasedir()).thenReturn(tempDir.toFile());
+      Path mdFile = tempDir.resolve("AGENTS.md");
+      Files.writeString(mdFile, "content");
+
+      assertDoesNotThrow(() -> mojo.execute());
+
+      assertTrue(Files.exists(tempDir.resolve("AGENTS.md.sha256")));
+    }
+
+    @Test
+    @DisplayName("should handle empty or whitespace skipDirs")
+    void shouldHandleEmptySkipDirs() throws Exception {
+      setField(mojo, "skipDirs", " , \t,target,");
+      Path mdFile = tempDir.resolve("AGENTS.md");
+      Files.writeString(mdFile, "content");
+
+      assertDoesNotThrow(() -> mojo.execute());
+
+      assertTrue(Files.exists(tempDir.resolve("AGENTS.md.sha256")));
+    }
+
+    @Test
+    @DisplayName("should handle patterns that do not start with **/")
+    void shouldHandleNonGlobbingPatterns() throws Exception {
+      setField(mojo, "includes", "src/test/*.md");
+      Path srcTest = tempDir.resolve("src").resolve("test");
+      Files.createDirectories(srcTest);
+      Path mdFile = srcTest.resolve("AGENTS.md");
+      Files.writeString(mdFile, "content");
+
+      assertDoesNotThrow(() -> mojo.execute());
+
+      assertTrue(Files.exists(srcTest.resolve("AGENTS.md.sha256")));
+    }
+
+    @Test
+    @DisplayName("should respect gitignore but allow forceIncludes")
+    void shouldRespectGitIgnoreAndForceIncludes() throws Exception {
+      setField(mojo, "gitignoreAutoExclude", true);
+      setField(mojo, "forceIncludes", "**/*.txt");
+
+      Files.writeString(tempDir.resolve(".gitignore"), "*.md\n");
+
+      Path ignoredMdFile = tempDir.resolve("AGENTS.md");
+      Files.writeString(ignoredMdFile, "content");
+      Path forcedTxtFile = tempDir.resolve("forced.txt");
+      Files.writeString(forcedTxtFile, "content");
+
+      mojo.execute();
+
+      assertFalse(
+          Files.exists(tempDir.resolve("AGENTS.md.sha256")),
+          "ignored .md file should not be hashed");
+      assertTrue(
+          Files.exists(tempDir.resolve("forced.txt.sha256")), "forced .txt file should be hashed");
+    }
+  }
+
   private static void setField(Object target, String fieldName, Object value) throws Exception {
     Field field = findField(target.getClass(), fieldName);
     field.setAccessible(true);
