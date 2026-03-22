@@ -97,6 +97,11 @@ public final class GitIgnoreParser {
         rule = rule.substring(1);
       }
 
+      final boolean dirOnly = rule.endsWith("/");
+      if (dirOnly) {
+        rule = rule.substring(0, rule.length() - 1);
+      }
+
       // Safely escape all regex metacharacters EXCEPT *, ?, and /
       StringBuilder sb = new StringBuilder();
       for (int i = 0; i < rule.length(); i++) {
@@ -119,6 +124,7 @@ public final class GitIgnoreParser {
         final Pattern pattern = Pattern.compile(regex);
         predicates.add(
             p -> {
+              if (dirOnly && !Files.isDirectory(p)) return false;
               if (!p.startsWith(baseDir) || p.equals(baseDir)) return false;
               Path relative = baseDir.relativize(p);
               String relativeStr = relative.toString().replace('\\', '/');
@@ -129,6 +135,7 @@ public final class GitIgnoreParser {
         final Pattern pattern = Pattern.compile(regex);
         predicates.add(
             p -> {
+              if (dirOnly && !Files.isDirectory(p)) return false;
               Path fileName = p.getFileName();
               return fileName != null && pattern.matcher(fileName.toString()).matches();
             });

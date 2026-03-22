@@ -284,6 +284,12 @@ public class HashVerifyMojo extends AbstractMojo {
                 }
                 Path rel = basePath.relativize(file);
 
+                boolean gitIgnored = isIgnoredByGit(file);
+
+                if (gitIgnored && !matchesAny(rel, forceIncludeMatchers)) {
+                  return FileVisitResult.CONTINUE;
+                }
+
                 if (matchesAny(rel, hashMatchers)) {
                   hashFiles.add(file);
                 }

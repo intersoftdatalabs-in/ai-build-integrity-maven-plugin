@@ -135,6 +135,138 @@ class HashCleanMojoTest {
     }
   }
 
+  @Nested
+  @DisplayName("Central Mode Tests")
+  class CentralModeTests {
+
+    @BeforeEach
+    void setUpCentral() throws Exception {
+      setField(mojo, "hashFileMode", HashFileMode.CENTRAL);
+      setField(mojo, "centralHashFile", tempDir.resolve("ai-integrity.sha256").toString());
+      setField(mojo, "buildDirectory", tempDir.resolve("target").toString());
+    }
+
+    @Test
+    @DisplayName("should delete central ledger file")
+    void shouldDeleteCentralLedger() throws Exception {
+      Path centralFile = tempDir.resolve("ai-integrity.sha256");
+      Files.writeString(centralFile, "hash  AGENTS.md\n");
+
+      mojo.execute();
+
+      assertFalse(Files.exists(centralFile), "Central file should be deleted");
+    }
+
+    @Test
+    @DisplayName("should warn and return when central ledger is missing")
+    void shouldWarnIfCentralLedgerMissing() throws Exception {
+      assertDoesNotThrow(() -> mojo.execute());
+      verify(log).info(contains("No central hash file found to clean."));
+    }
+
+    @Test
+    @DisplayName("should use default central ledger path if none is specified")
+    void shouldUseDefaultCentralLedger() throws Exception {
+      setField(mojo, "centralHashFile", "");
+      Path defaultCentralFile = tempDir.resolve("target").resolve("ai-integrity.sha256");
+      Files.createDirectories(defaultCentralFile.getParent());
+      Files.writeString(defaultCentralFile, "hash");
+
+      mojo.execute();
+
+      assertFalse(Files.exists(defaultCentralFile));
+    }
+  }
+
+  @Nested
+  @DisplayName("Skip and Reactor Tests")
+  class SkipAndReactorTests {
+
+    @Test
+    @DisplayName("should skip execution when skip property is true")
+    void shouldSkipWhenSkipIsTrue() throws Exception {
+      setField(mojo, "skip", true);
+      mojo.execute();
+      verify(log).info("Skipping execution.");
+    }
+
+    @Test
+    @DisplayName("should skip execution when skipAlt property is true")
+    void shouldSkipWhenSkipAltIsTrue() throws Exception {
+      setField(mojo, "skipAlt", true);
+      mojo.execute();
+      verify(log).info("Skipping execution.");
+    }
+
+    @Test
+    @DisplayName("should skip execution in non-root project when executionRootOnly is true")
+    void shouldSkipInNonRootProject() throws Exception {
+      setField(mojo, "executionRootOnly", true);
+      when(project.isExecutionRoot()).thenReturn(false);
+      mojo.execute();
+      verify(log).info("Skipping HashCleanMojo execution in non-root project.");
+    }
+  }
+
+  @Nested
+  @DisplayName("Configuration Edge Case Tests")
+  class ConfigurationEdgeCaseTests {
+
+    @Test
+    @DisplayName("should use custom output extension")
+    void shouldUseCustomOutputExtension() throws Exception {
+      setField(mojo, "outputExtension", ".customhash");
+      Path mdFile = tempDir.resolve("AGENTS.md");
+      Files.writeString(mdFile, "content");
+      Path hashFile = tempDir.resolve("AGENTS.md.customhash");
+      Files.writeString(hashFile, "hash");
+
+      mojo.execute();
+
+      assertFalse(Files.exists(hashFile));
+    }
+
+    @Test
+    @DisplayName("should handle empty or whitespace skipDirs")
+    void shouldHandleEmptySkipDirs() throws Exception {
+      setField(mojo, "skipDirs", " , \t,target,");
+      Path mdFile = tempDir.resolve("AGENTS.md");
+      Files.writeString(mdFile, "content");
+      Path hashFile = tempDir.resolve("AGENTS.md.sha256");
+      Files.writeString(hashFile, "hash");
+
+      mojo.execute();
+
+      assertFalse(Files.exists(hashFile));
+    }
+
+    @Test
+    @DisplayName("should respect gitignore but allow forceIncludes")
+    void shouldRespectGitIgnoreAndForceIncludes() throws Exception {
+      setField(mojo, "gitignoreAutoExclude", true);
+      setField(mojo, "forceIncludes", "**/*.txt.sha256");
+
+      Files.writeString(tempDir.resolve(".gitignore"), "**/*.md.sha256\n");
+
+      Path subdir = tempDir.resolve("subdir");
+      Files.createDirectory(subdir);
+
+      Path ignoredMdFile = subdir.resolve("AGENTS.md.sha256");
+      Files.writeString(ignoredMdFile, "hash");
+      Path forcedTxtFile = subdir.resolve("forced.txt.sha256");
+      Files.writeString(forcedTxtFile, "hash");
+
+      mojo.execute();
+
+      assertTrue(
+          Files.exists(subdir.resolve("AGENTS.md.sha256")),
+          "ignored .md.sha256 file should NOT be deleted");
+      assertFalse(
+          Files.exists(subdir.resolve("forced.txt.sha256")),
+          "forced .txt.sha256 file should be deleted");
+    }
+  }
+
   private static void setField(Object target, String fieldName, Object value) throws Exception {
     Field field = findField(target.getClass(), fieldName);
     field.setAccessible(true);
