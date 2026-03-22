@@ -6,7 +6,7 @@
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Build](https://github.com/intersoftdatalabs-in/ai-build-integrity-maven-plugin/actions/workflows/maven.yml/badge.svg)](https://github.com/intersoftdatalabs-in/ai-build-integrity-maven-plugin/actions/workflows/maven.yml)
 [![Test Coverage](https://raw.githubusercontent.com/intersoftdatalabs-in/ai-build-integrity-maven-plugin/badges/jacoco.svg)](https://github.com/intersoftdatalabs-in/ai-build-integrity-maven-plugin/actions/workflows/maven.yml)
-[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/12230/badge)](https://www.bestpractices.dev/projects/12230)
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/12230/badge)](https://www.bestpractices.dev/projects/12230) (wtf dude)
 
 </div>
 
