@@ -37,26 +37,32 @@ graph TD
 ## Core Components
 
 ### 1. The Mojos (Entry Points)
+
 - **`HashGeneratorMojo`**: Scans the project based on `includes`/`excludes` and generates the cryptographic state.
 - **`HashVerifyMojo`**: Re-computes hashes and compares them against the stored ledger. It is the primary "gatekeeper" for CI/CD pipelines.
 - **`HashCleanMojo`**: Safe cleanup of generated artifacts, especially in `SIDECAR` mode.
 
 ### 2. The Hashing Engine (`HashUtils`)
+
 - Uses **Java NIO** for high-performance file I/O.
 - Implements **Streaming Buffers** to handle large files without exhausting RAM.
 - **Line Ending Normalization**: Automatically converts CRLF to LF during the hashing stream to ensure cross-platform consistency.
 - Supports **SHA-256** (default) and **SHA-512**.
 
 ### 3. I/O & Filtering (`GitIgnoreAwareFileVisitor`)
+
 - A custom file visitor that respects `.gitignore` patterns.
 - Optimized to prune subtrees early (e.g., `target/`, `.git/`, `node_modules/`) to maintain high throughput.
 
 ### 4. Integrity Reporting
+
 - **Central Ledger**: A single source of truth for the entire project.
 - **Audit Reports**: JSON-formatted logs designed for ingestion by SIEM systems (Splunk, DataDog, etc.).
 - **Sidecar Mode**: Distributed hashes for environments where a central ledger is not ideal.
 
 ## Security Design
+
 - **Foundation of Trust**: The plugin assumes the maintainer's environment is trusted during the initial `generate-hashes` phase.
 - **Tamper Detection**: Any change to a file's content or line-endings will trigger a mismatch in the `verify` phase.
 - **SIEM Pipeline**: By exporting results to a JSON audit report, we enable real-time detection of tampering during the CI build process.
+
