@@ -178,6 +178,12 @@ public class HashCleanMojo extends AbstractMojo {
               public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
                 Path rel = basePath.relativize(file);
 
+                boolean gitIgnored = isIgnoredByGit(file);
+
+                if (gitIgnored && !matchesAny(rel, forceIncludeMatchers)) {
+                  return FileVisitResult.CONTINUE;
+                }
+
                 if (matchesAny(rel, hashMatchers)) {
                   filesToDelete.add(file);
                 }

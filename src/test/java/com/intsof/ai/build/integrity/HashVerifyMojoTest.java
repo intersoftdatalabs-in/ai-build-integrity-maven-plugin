@@ -254,6 +254,204 @@ class HashVerifyMojoTest {
   }
 
   @Nested
+  @DisplayName("Skip and Reactor Tests")
+  class SkipAndReactorTests {
+
+    @Test
+    @DisplayName("should skip execution when skip property is true")
+    void shouldSkipWhenSkipIsTrue() throws Exception {
+      setField(mojo, "skip", true);
+      mojo.execute();
+      verify(log).info("Skipping execution.");
+    }
+
+    @Test
+    @DisplayName("should skip execution when skipAlt property is true")
+    void shouldSkipWhenSkipAltIsTrue() throws Exception {
+      setField(mojo, "skipAlt", true);
+      mojo.execute();
+      verify(log).info("Skipping execution.");
+    }
+
+    @Test
+    @DisplayName("should skip execution in non-root project when executionRootOnly is true")
+    void shouldSkipInNonRootProject() throws Exception {
+      setField(mojo, "executionRootOnly", true);
+      when(project.isExecutionRoot()).thenReturn(false);
+      mojo.execute();
+      verify(log).info("Skipping HashVerifyMojo execution in non-root project.");
+    }
+
+    @Test
+    @DisplayName("should render reactor progress bar for multi-module builds")
+    void shouldRenderReactorProgressBar() throws Exception {
+      org.apache.maven.execution.MavenSession session =
+          mock(org.apache.maven.execution.MavenSession.class);
+      MavenProject proj1 = mock(MavenProject.class);
+      MavenProject proj2 = mock(MavenProject.class);
+
+      when(proj1.getArtifactId()).thenReturn("module-a");
+      when(project.getArtifactId()).thenReturn("module-a"); // We are building module-a
+
+      when(session.getProjects()).thenReturn(java.util.Arrays.asList(proj1, proj2));
+      setField(mojo, "session", session);
+
+      // Given a valid file to pass traversal
+      Path mdFile = tempDir.resolve("AGENTS.md");
+      Files.writeString(mdFile, "content");
+      String hash = HashUtils.computeHash(mdFile, "SHA-256", false);
+      Files.writeString(tempDir.resolve("AGENTS.md.sha256"), hash + "  AGENTS.md\n");
+
+      mojo.execute();
+
+      verify(log).info(contains("Repo-wide integrity checkpoint for: module-a"));
+      verify(log).info(contains("Reactor Integrity: |"));
+    }
+  }
+
+  @Nested
+  @DisplayName("Configuration Edge Case Tests")
+  class ConfigurationEdgeCaseTests {
+
+    @Test
+    @DisplayName("should use custom output extension")
+    void shouldUseCustomOutputExtension() throws Exception {
+      setField(mojo, "outputExtension", ".customhash");
+      Path mdFile = tempDir.resolve("AGENTS.md");
+      Files.writeString(mdFile, "content");
+      String hash = HashUtils.computeHash(mdFile, "SHA-256", false);
+      Files.writeString(tempDir.resolve("AGENTS.md.customhash"), hash + "  AGENTS.md\n");
+
+      assertDoesNotThrow(() -> mojo.execute());
+    }
+
+    @Test
+    @DisplayName("should use project basedir when baseDir is empty")
+    void shouldUseProjectBasedir() throws Exception {
+      setField(mojo, "baseDir", "");
+      when(project.getBasedir()).thenReturn(tempDir.toFile());
+      Path mdFile = tempDir.resolve("AGENTS.md");
+      Files.writeString(mdFile, "content");
+      String hash = HashUtils.computeHash(mdFile, "SHA-256", false);
+      Files.writeString(tempDir.resolve("AGENTS.md.sha256"), hash + "  AGENTS.md\n");
+
+      assertDoesNotThrow(() -> mojo.execute());
+    }
+
+    @Test
+    @DisplayName("should handle empty or whitespace skipDirs")
+    void shouldHandleEmptySkipDirs() throws Exception {
+      setField(mojo, "skipDirs", " , \t,target,");
+      Path mdFile = tempDir.resolve("AGENTS.md");
+      Files.writeString(mdFile, "content");
+      String hash = HashUtils.computeHash(mdFile, "SHA-256", false);
+      Files.writeString(tempDir.resolve("AGENTS.md.sha256"), hash + "  AGENTS.md\n");
+
+      assertDoesNotThrow(() -> mojo.execute());
+    }
+
+    @Test
+    @DisplayName("should respect gitignore but allow forceIncludes")
+    void shouldRespectGitIgnoreAndForceIncludes() throws Exception {
+      setField(mojo, "gitignoreAutoExclude", true);
+      setField(mojo, "forceIncludes", "**/*.txt.sha256");
+
+      Files.writeString(tempDir.resolve(".gitignore"), "**/*.md.sha256\n");
+
+      Path subdir = tempDir.resolve("subdir");
+      Files.createDirectory(subdir);
+
+      Path ignoredMdFile = subdir.resolve("AGENTS.md.sha256");
+      Files.writeString(ignoredMdFile, "invalid-hash");
+      Path forcedTxtFile = subdir.resolve("forced.txt");
+      Files.writeString(forcedTxtFile, "content");
+      String hash = HashUtils.computeHash(forcedTxtFile, "SHA-256", false);
+      Files.writeString(subdir.resolve("forced.txt.sha256"), hash + "  forced.txt\n");
+
+      // The ignored file should be skipped, so it won't throw an execution exception from an
+      // invalid hash
+      assertDoesNotThrow(() -> mojo.execute());
+    }
+  }
+
+  @Nested
+  @DisplayName("Central Mode Tests")
+  class CentralModeTests {
+
+    @BeforeEach
+    void setUpCentral() throws Exception {
+      setField(mojo, "hashFileMode", HashFileMode.CENTRAL);
+      setField(mojo, "centralHashFile", tempDir.resolve("ai-integrity.sha256").toString());
+    }
+
+    @Test
+    @DisplayName("should pass verification when central hashes match")
+    void shouldPassCentralMatch() throws Exception {
+      Path mdFile = tempDir.resolve("AGENTS.md");
+      Files.writeString(mdFile, "content");
+      String hash = HashUtils.computeHash(mdFile, "SHA-256", false);
+
+      Path centralFile = tempDir.resolve("ai-integrity.sha256");
+      Files.writeString(centralFile, hash + "  AGENTS.md\n");
+
+      setField(mojo, "generateAuditReport", true);
+      setField(mojo, "buildDirectory", tempDir.resolve("target").toString());
+
+      assertDoesNotThrow(() -> mojo.execute());
+      assertTrue(Files.exists(tempDir.resolve("target").resolve("ai-integrity-report.json")));
+    }
+
+    @Test
+    @DisplayName("should fail when tampered in central mode")
+    void shouldFailCentralMismatch() throws Exception {
+      Path mdFile = tempDir.resolve("AGENTS.md");
+      Files.writeString(mdFile, "tampered");
+
+      Path centralFile = tempDir.resolve("ai-integrity.sha256");
+      Files.writeString(centralFile, "00000000000  AGENTS.md\n");
+
+      setField(mojo, "generateAuditReport", true);
+      setField(mojo, "buildDirectory", tempDir.resolve("target").toString());
+
+      MojoExecutionException ex = assertThrows(MojoExecutionException.class, () -> mojo.execute());
+      assertTrue(ex.getMessage().contains("FAILED"));
+      assertTrue(Files.exists(tempDir.resolve("target").resolve("ai-integrity-report.json")));
+    }
+
+    @Test
+    @DisplayName("should skip empty and invalid lines in central mode")
+    void shouldSkipEmptyLines() throws Exception {
+      Path centralFile = tempDir.resolve("ai-integrity.sha256");
+      Files.writeString(centralFile, "\n   \nONLY_HASH\n");
+      assertDoesNotThrow(() -> mojo.execute());
+    }
+
+    @Test
+    @DisplayName("should report missing file in central mode audit")
+    void shouldReportMissingFileCentral() throws Exception {
+      setField(mojo, "generateAuditReport", true);
+      setField(mojo, "buildDirectory", tempDir.resolve("target").toString());
+
+      Path centralFile = tempDir.resolve("ai-integrity.sha256");
+      Files.writeString(centralFile, "00000000  MISSING.md\n");
+
+      MojoExecutionException ex = assertThrows(MojoExecutionException.class, () -> mojo.execute());
+      assertTrue(ex.getMessage().contains("FAILED"));
+
+      Path reportFile = tempDir.resolve("target").resolve("ai-integrity-report.json");
+      String content = Files.readString(reportFile);
+      assertTrue(content.contains("\"status\": \"MISSING\""));
+    }
+
+    @Test
+    @DisplayName("should skip execution if central file not found")
+    void shouldSkipIfCentralFileNotFound() throws Exception { // It warns and returns
+      assertDoesNotThrow(() -> mojo.execute());
+      verify(log).warn(contains("Central hash file not found"));
+    }
+  }
+
+  @Nested
   @DisplayName("Audit Report")
   class AuditReportTests {
 
