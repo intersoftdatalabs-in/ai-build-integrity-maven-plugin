@@ -23,8 +23,18 @@ jobs:
     - name: Build with Maven
       run: mvn -B verify --file pom.xml
       
-    - name: Upload coverage reports to Codecov
-      uses: codecov/codecov-action@v4
+    - name: Generate JaCoCo Badge
+      uses: cicirello/jacoco-badge-generator@v2
       with:
-        token: ${{ secrets.CODECOV_TOKEN }}
-        slug: intersoftdatalabs-in/ai-build-integrity-maven-plugin
+        generate-branches-badge: true
+        badges-directory: badges
+
+    - name: Commit the badge (if changed)
+      uses: EndBug/add-and-commit@v9
+      if: ${{ github.event_name != 'pull_request' }}
+      with:
+        default_author: github_actions
+        message: 'chore: update JaCoCo coverage badge'
+        add: 'badges'
+        new_branch: badges
+        push: '--force'
