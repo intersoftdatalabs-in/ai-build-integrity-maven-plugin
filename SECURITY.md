@@ -39,3 +39,23 @@ We ask that you follow responsible disclosure principles:
 - Do not exploit the vulnerability beyond what is necessary for a proof of concept.
 
 Thank you for helping us keep the global AI supply chain secure!
+
+## Vulnerability Management Policy
+
+We are committed to the proactive discovery and timely remediation of security vulnerabilities.
+
+### Internal Scanning
+
+- **Static Analysis:** This project uses GitHub CodeQL and other static analysis tools on every Pull Request and on a weekly scheduled basis.
+- **Triage:** All "Medium" or higher severity findings are triaged by maintainers within 5 business days to confirm exploitability.
+
+### Remediation Timelines
+
+Confirmed exploitable vulnerabilities will be remediated according to the following schedule:
+
+- **Critical/High Severity:** Fixed within 30 days of confirmation.
+- **Medium Severity:** Fixed within 90 days of confirmation.
+
+### False Positives
+
+Findings determined to be non-exploitable or false positives will be dismissed in the scanning tool with a documented justification.
