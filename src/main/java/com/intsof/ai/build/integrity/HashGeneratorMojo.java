@@ -53,6 +53,9 @@ import org.apache.maven.project.MavenProject;
 @Mojo(name = "generate-hashes", defaultPhase = LifecyclePhase.VALIDATE, requiresProject = true)
 public class HashGeneratorMojo extends AbstractMojo {
 
+  /** Default constructor for {@link HashGeneratorMojo}. */
+  public HashGeneratorMojo() {}
+
   /** Current Maven project instance. */
   @Parameter(defaultValue = "${project}", readonly = true, required = true)
   private MavenProject project;

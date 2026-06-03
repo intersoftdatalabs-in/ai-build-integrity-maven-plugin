@@ -49,6 +49,9 @@ import org.apache.maven.project.MavenProject;
     threadSafe = true)
 public class HashCleanMojo extends AbstractMojo {
 
+  /** Default constructor for {@link HashCleanMojo}. */
+  public HashCleanMojo() {}
+
   /** Current Maven project instance. */
   @Parameter(defaultValue = "${project}", readonly = true, required = true)
   private MavenProject project;
