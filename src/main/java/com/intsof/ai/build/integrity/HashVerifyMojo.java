@@ -55,6 +55,9 @@ import org.apache.maven.project.MavenProject;
 @Mojo(name = "verify-hashes", defaultPhase = LifecyclePhase.TEST, requiresProject = true)
 public class HashVerifyMojo extends AbstractMojo {
 
+  /** Default constructor for {@link HashVerifyMojo}. */
+  public HashVerifyMojo() {}
+
   /**
    * Maximum allowed size for a hash sidecar file (8 KiB). Files larger than this are rejected to
    * prevent reading maliciously large files.
