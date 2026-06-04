@@ -51,13 +51,13 @@ Add the plugin to your `pom.xml`. The plugin seals your AI instruction files at 
 and verifies them at `test`. A centralized ledger is written to `target/` — no sidecar files
 in your source tree.
 
-The plugin is available on Maven Central as of version 0.9.0.
+The plugin is available on Maven Central as of version 0.10.0.
 
 ```xml
 <plugin>
     <groupId>com.intsof</groupId>
     <artifactId>ai-build-integrity-maven-plugin</artifactId>
-    <version>0.9.0</version>
+    <version>0.10.0</version>
     <configuration>
         <!-- Centralized ledger: no sidecar files in your source tree -->
         <hashFileMode>CENTRAL</hashFileMode>
@@ -98,7 +98,7 @@ tampering you must verify in **every module**. The correct architecture is:
             <plugin>
                 <groupId>com.intsof</groupId>
                 <artifactId>ai-build-integrity-maven-plugin</artifactId>
-                <version>0.9.0-SNAPSHOT</version>
+                <version>0.10.0</version>
                 <configuration>
                     <hashFileMode>CENTRAL</hashFileMode>
                     <!-- Scan the entire repo, not just the current module's basedir -->
