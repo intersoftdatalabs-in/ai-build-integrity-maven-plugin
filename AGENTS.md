@@ -14,4 +14,5 @@
 - When implementing new features or fixing bugs, create a feature branch and submit a pull request for review.
 - The project follows semantic versioning (https://semver.org/). When committing features or bug fixes, the version in pom.xml should be updated to reflect this (PATCH for bug fixes, MINOR for backwards-compatible features, MAJOR for breaking changes).
 - All temporary files should be written to the `.tmp` folder in the repository and removed when no longer needed.
+- When committing features or bug fixes, the CHANGELOG.md must be updated with the changes made in that version.
 
