@@ -12,4 +12,5 @@
 - Suggest improvements to the project by creating detailed issues in the GitHub repository.
 - ANY time you modify code to address unexpected behavior or fix a bug, you MUST explicitly log each instance as a detailed bug issue in the GitHub repository. DO NOT make un-logged bug fixes.
 - When implementing new features or fixing bugs, create a feature branch and submit a pull request for review.
+- The project follows semantic versioning (https://semver.org/). When committing features or bug fixes, the version in pom.xml should be updated to reflect this (PATCH for bug fixes, MINOR for backwards-compatible features, MAJOR for breaking changes).
 

@@ -21,6 +21,8 @@ import static org.mockito.Mockito.*;
 import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import org.apache.maven.execution.MavenExecutionRequest;
+import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.project.MavenProject;
 import org.junit.jupiter.api.BeforeEach;
@@ -37,6 +39,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class HashGeneratorMojoTest {
 
   @Mock private MavenProject project;
+  @Mock private MavenSession session;
   @Mock private Log log;
   @TempDir Path tempDir;
 
@@ -47,6 +50,7 @@ class HashGeneratorMojoTest {
     mojo = new HashGeneratorMojo();
     mojo.setLog(log);
     setField(mojo, "project", project);
+    setField(mojo, "session", session);
     setField(mojo, "algorithmBits", 256);
     setField(mojo, "includes", "**/*.md");
     setField(mojo, "excludes", "**/*.sha256,**/*.sha384,**/*.sha512");
@@ -284,6 +288,45 @@ class HashGeneratorMojoTest {
 
       Path defaultCentralFile = tempDir.resolve("target").resolve("ai-integrity.sha256");
       assertTrue(Files.exists(defaultCentralFile));
+    }
+  }
+
+  @Nested
+  @DisplayName("Resume Mode Tests")
+  class ResumeModeTests {
+
+    @Test
+    @DisplayName("should skip hash generation when this module is not the resume target")
+    void shouldSkipWhenNotResumeTarget() throws Exception {
+      MavenExecutionRequest mockRequest = mock(MavenExecutionRequest.class);
+      when(session.getRequest()).thenReturn(mockRequest);
+      when(mockRequest.getResumeFrom()).thenReturn(":module-b");
+
+      when(project.getArtifactId()).thenReturn("module-a");
+      setField(mojo, "resumeFromModule", "module-b");
+      Files.writeString(tempDir.resolve("AGENTS.md"), "content");
+
+      mojo.execute();
+
+      verify(log).info(contains("Skipping hash regeneration for module-a"));
+      assertFalse(Files.exists(tempDir.resolve("AGENTS.md.sha256")));
+    }
+
+    @Test
+    @DisplayName("should generate hashes when this module is the resume target")
+    void shouldGenerateWhenResumeTarget() throws Exception {
+      MavenExecutionRequest mockRequest = mock(MavenExecutionRequest.class);
+      when(session.getRequest()).thenReturn(mockRequest);
+      when(mockRequest.getResumeFrom()).thenReturn(":module-a");
+
+      when(project.getArtifactId()).thenReturn("module-a");
+      setField(mojo, "resumeFromModule", "module-a");
+      Files.writeString(tempDir.resolve("AGENTS.md"), "content");
+
+      mojo.execute();
+
+      verify(log).info(contains("Resume mode: regenerating hashes for module-a"));
+      assertTrue(Files.exists(tempDir.resolve("AGENTS.md.sha256")));
     }
   }
 
