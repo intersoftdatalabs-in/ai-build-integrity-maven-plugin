@@ -5,10 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.10.0] - 2026-06-03
 
 ### Added
 
+- **Resume-Safe Hash Regeneration**: When resuming a failed multi-module build with `-rf :module-name`, the plugin now regenerates hashes only for the resuming module, allowing intentional edits made during the failed build to pass verification without triggering tamper detection.
 - **Javadoc & JaCoCo Reports**: Integrated API documentation and visual test coverage reports into the Maven site.
 - **Reference Documentation**: Added a formal specification for all plugin inputs (configuration) and outputs (ledger/audit reports).
 - **Maintenance Policy**: Formally documented the project's maintenance and update schedule in `CONTRIBUTING.md`.
@@ -32,6 +33,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - .gitignore awareness and automatic directory pruning.
 - Machine-readable JSON audit reports for SIEM integration.
 
-[Unreleased]: https://github.com/intersoftdatalabs-in/ai-build-integrity-maven-plugin/compare/v0.9.0...HEAD
+[0.10.0]: https://github.com/intersoftdatalabs-in/ai-build-integrity-maven-plugin/compare/v0.9.0...HEAD
 [0.9.0]: https://github.com/intersoftdatalabs-in/ai-build-integrity-maven-plugin/releases/tag/v0.9.0
 
