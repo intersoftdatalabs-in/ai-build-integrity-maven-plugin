@@ -1,0 +1,2 @@
+export GH_TOKEN=$(gh auth token --user natechadwick-intsof)
+gh repo set-default origin

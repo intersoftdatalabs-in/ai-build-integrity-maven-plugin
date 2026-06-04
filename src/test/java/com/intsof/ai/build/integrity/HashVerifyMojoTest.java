@@ -21,6 +21,8 @@ import static org.mockito.Mockito.*;
 import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import org.apache.maven.execution.MavenExecutionRequest;
+import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.project.MavenProject;
@@ -38,6 +40,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class HashVerifyMojoTest {
 
   @Mock private MavenProject project;
+  @Mock private MavenSession session;
   @Mock private Log log;
   @TempDir Path tempDir;
 
@@ -48,6 +51,7 @@ class HashVerifyMojoTest {
     mojo = new HashVerifyMojo();
     mojo.setLog(log);
     setField(mojo, "project", project);
+    setField(mojo, "session", session);
     setField(mojo, "failOnError", true);
     setField(mojo, "algorithmBits", 256);
     setField(mojo, "baseDir", tempDir.toString());
@@ -254,6 +258,49 @@ class HashVerifyMojoTest {
   }
 
   @Nested
+  @DisplayName("Resume Mode Tests")
+  class ResumeModeTests {
+
+    @Test
+    @DisplayName("should skip verification when module is resume target")
+    void shouldSkipVerificationForResumeTarget() throws Exception {
+      MavenExecutionRequest mockRequest = mock(MavenExecutionRequest.class);
+      when(session.getRequest()).thenReturn(mockRequest);
+      when(mockRequest.getResumeFrom()).thenReturn("module-a");
+
+      when(project.getArtifactId()).thenReturn("module-a");
+      setField(mojo, "resumeFromModule", "module-a");
+
+      Path mdFile = tempDir.resolve("AGENTS.md");
+      Files.writeString(mdFile, "content");
+      String hash = HashUtils.computeHash(mdFile, "SHA-256", false);
+      Files.writeString(tempDir.resolve("AGENTS.md.sha256"), hash + "  AGENTS.md\n");
+
+      mojo.execute();
+
+      verify(log).info(contains("Resume mode: skipping verification for module-a"));
+    }
+
+    @Test
+    @DisplayName("should verify normally when not the resume target")
+    void shouldVerifyWhenNotResumeTarget() throws Exception {
+      MavenExecutionRequest mockRequest = mock(MavenExecutionRequest.class);
+      when(session.getRequest()).thenReturn(mockRequest);
+      when(mockRequest.getResumeFrom()).thenReturn("module-a");
+
+      when(project.getArtifactId()).thenReturn("module-b");
+      setField(mojo, "resumeFromModule", "module-b");
+
+      Path mdFile = tempDir.resolve("AGENTS.md");
+      Files.writeString(mdFile, "content");
+      String hash = HashUtils.computeHash(mdFile, "SHA-256", false);
+      Files.writeString(tempDir.resolve("AGENTS.md.sha256"), hash + "  AGENTS.md\n");
+
+      assertDoesNotThrow(() -> mojo.execute());
+    }
+  }
+
+  @Nested
   @DisplayName("Skip and Reactor Tests")
   class SkipAndReactorTests {
 
@@ -285,8 +332,6 @@ class HashVerifyMojoTest {
     @Test
     @DisplayName("should render reactor progress bar for multi-module builds")
     void shouldRenderReactorProgressBar() throws Exception {
-      org.apache.maven.execution.MavenSession session =
-          mock(org.apache.maven.execution.MavenSession.class);
       MavenProject proj1 = mock(MavenProject.class);
       MavenProject proj2 = mock(MavenProject.class);
 
@@ -294,7 +339,6 @@ class HashVerifyMojoTest {
       when(project.getArtifactId()).thenReturn("module-a"); // We are building module-a
 
       when(session.getProjects()).thenReturn(java.util.Arrays.asList(proj1, proj2));
-      setField(mojo, "session", session);
 
       // Given a valid file to pass traversal
       Path mdFile = tempDir.resolve("AGENTS.md");
