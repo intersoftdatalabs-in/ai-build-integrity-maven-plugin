@@ -11,6 +11,9 @@ buildNumber.properties
 .mvn/wrapper/maven-wrapper.jar
 *.log
 
+# AI generated temp files
+.tmp
+
 # IDE
 .idea/
 *.iml
