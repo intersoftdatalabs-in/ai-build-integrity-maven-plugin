@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
@@ -59,6 +60,10 @@ public class HashGeneratorMojo extends AbstractMojo {
   /** Current Maven project instance. */
   @Parameter(defaultValue = "${project}", readonly = true, required = true)
   private MavenProject project;
+
+  /** Current Maven session, used to detect resume-from flag. */
+  @Parameter(defaultValue = "${session}", readonly = true, required = true)
+  private MavenSession session;
 
   /**
    * If true, skips the execution of the mojo. Accepts both {@code -Dai.integrity.skip=true} and the
@@ -131,6 +136,13 @@ public class HashGeneratorMojo extends AbstractMojo {
   @Parameter(property = "ai.integrity.forceIncludes", defaultValue = "")
   private String forceIncludes;
 
+  /**
+   * When set, the mojo regenerates hashes ONLY for this module in a resume scenario. This allows
+   * intentional edits during failed builds to pass verification.
+   */
+  @Parameter(property = "ai.integrity.resumeFromModule")
+  private String resumeFromModule;
+
   /** If true, natively hides the generated hash sidecar files across all operating systems. */
   @Parameter(property = "ai.integrity.hideHashFiles", defaultValue = "true")
   private boolean hideHashFiles;
@@ -153,6 +165,26 @@ public class HashGeneratorMojo extends AbstractMojo {
     if (executionRootOnly && !project.isExecutionRoot()) {
       getLog().info("Skipping HashGeneratorMojo execution in non-root project.");
       return;
+    }
+
+    String resumedProject = null;
+    if (session != null && session.getRequest() != null) {
+      resumedProject = session.getRequest().getResumeFrom();
+    }
+    boolean isResumeBuild = resumedProject != null && !resumedProject.isEmpty();
+
+    if (isResumeBuild && resumeFromModule != null && !resumeFromModule.isEmpty()) {
+      if (!project.getArtifactId().equals(resumeFromModule)) {
+        getLog()
+            .info(
+                "Skipping hash regeneration for "
+                    + project.getArtifactId()
+                    + " (resume target is "
+                    + resumedProject
+                    + ")");
+        return;
+      }
+      getLog().info("Resume mode: regenerating hashes for " + resumeFromModule);
     }
 
     String algorithm = HashUtils.resolveAlgorithm(algorithmBits);
