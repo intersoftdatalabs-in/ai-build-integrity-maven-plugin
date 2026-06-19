@@ -94,7 +94,7 @@
         <maven.site.plugin.version>3.22.0</maven.site.plugin.version>
         <maven.project.info.reports.plugin.version>3.9.0</maven.project.info.reports.plugin.version>
         <spotless.version>2.46.1</spotless.version>
-        <central.publishing.plugin.version>0.10.0</central.publishing.plugin.version>
+        <central.publishing.plugin.version>0.11.0</central.publishing.plugin.version>
 
         <!-- Signing configuration -->
         <sign>false</sign>
