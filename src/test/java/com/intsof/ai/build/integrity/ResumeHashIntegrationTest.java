@@ -19,6 +19,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import java.lang.reflect.Field;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import org.apache.maven.execution.MavenExecutionRequest;
@@ -81,19 +82,20 @@ class ResumeHashIntegrationTest {
     when(project.getBasedir()).thenReturn(tempDir.toFile());
 
     Path mdFile = tempDir.resolve("AGENTS.md");
-    Files.writeString(mdFile, "original content");
+    Files.write(mdFile, "original content".getBytes(StandardCharsets.UTF_8));
 
     setField(generatorMojo, "resumeFromModule", "module-b");
     generatorMojo.execute();
     assertTrue(Files.exists(tempDir.resolve("AGENTS.md.sha256")));
 
-    Files.writeString(mdFile, "intentionally modified during failed build");
+    Files.write(
+        mdFile, "intentionally modified during failed build".getBytes(StandardCharsets.UTF_8));
 
     MavenExecutionRequest mockRequest = mock(MavenExecutionRequest.class);
     when(session.getRequest()).thenReturn(mockRequest);
     when(mockRequest.getResumeFrom()).thenReturn("module-b");
 
-    Files.writeString(mdFile, "original content");
+    Files.write(mdFile, "original content".getBytes(StandardCharsets.UTF_8));
     generatorMojo.execute();
 
     setField(verifyMojo, "resumeFromModule", "module-b");

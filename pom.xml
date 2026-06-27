@@ -57,7 +57,7 @@
     </developers>
 
     <prerequisites>
-        <maven>3.9.0</maven>
+        <maven>3.8.0</maven>
     </prerequisites>
 
     <scm>
@@ -73,11 +73,12 @@
     </issueManagement>
 
     <properties>
-        <java.version>11</java.version>
-        <maven.compiler.release>${java.version}</maven.compiler.release>
+        <java.version>8</java.version>
+        <maven.compiler.source>${java.version}</maven.compiler.source>
+        <maven.compiler.target>${java.version}</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <maven.api.version>3.9.16</maven.api.version>
+        <maven.api.version>3.8.8</maven.api.version>
         <maven.plugin.tools.version>3.15.2</maven.plugin.tools.version>
         <junit5.version>5.14.4</junit5.version>
         <mockito.version>5.23.0</mockito.version>
@@ -163,7 +164,8 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>${maven.compiler.plugin.version}</version>
                 <configuration>
-                    <release>${java.version}</release>
+                    <source>${java.version}</source>
+                    <target>${java.version}</target>
                 </configuration>
             </plugin>
             <plugin>
@@ -333,10 +335,17 @@
                 <artifactId>maven-site-plugin</artifactId>
                 <version>${maven.site.plugin.version}</version>
             </plugin>
+            <!--
+            Temporarily disabled until 0.10.0 is published to Maven Central.
+            This self-referencing plugin declaration requires Maven 3.8.x, which is now
+            our minimum prerequisite. Re-enable once 0.10.0 is available on Maven Central
+            by uncommenting the block below.
+            -->
+            <!--
             <plugin>
                 <groupId>com.intsof</groupId>
                 <artifactId>ai-build-integrity-maven-plugin</artifactId>
-                <version>0.9.0</version>
+                <version>0.10.0</version>
                 <configuration>
                     <hashFileMode>CENTRAL</hashFileMode>
                 </configuration>
@@ -360,6 +369,7 @@
                     </execution>
                 </executions>
             </plugin>
+            -->
         </plugins>
     </build>
 

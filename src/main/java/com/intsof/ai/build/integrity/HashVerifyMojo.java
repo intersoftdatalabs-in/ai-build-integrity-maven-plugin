@@ -16,6 +16,7 @@
 package com.intsof.ai.build.integrity;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystem;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
@@ -370,12 +371,12 @@ public class HashVerifyMojo extends AbstractMojo {
             continue;
           }
 
-          String content = Files.readString(hashFile);
+          String content = new String(Files.readAllBytes(hashFile), StandardCharsets.UTF_8);
           String[] parts = content.split("\\s+");
           String storedHash = parts[0];
 
           if (parts.length >= 2) {
-            String embeddedFilename = parts[1].strip();
+            String embeddedFilename = parts[1].trim();
             String expectedFilename = sourceFile.getFileName().toString();
             if (!embeddedFilename.equals(expectedFilename)) {
               getLog()
@@ -463,7 +464,7 @@ public class HashVerifyMojo extends AbstractMojo {
         report.append(String.join(",\n", auditEntries));
         report.append("\n  ]\n");
         report.append("}\n");
-        Files.writeString(reportFile, report.toString());
+        Files.write(reportFile, report.toString().getBytes(StandardCharsets.UTF_8));
         getLog().info("Audit report generated: " + reportFile);
       } catch (IOException e) {
         getLog().error("Failed to write audit report: " + e.getMessage());
@@ -519,7 +520,7 @@ public class HashVerifyMojo extends AbstractMojo {
     Set<String> result = new HashSet<>();
     if (skipDirs != null) {
       for (String dir : skipDirs.split(",")) {
-        String trimmed = dir.strip();
+        String trimmed = dir.trim();
         if (!trimmed.isEmpty()) {
           result.add(trimmed);
         }

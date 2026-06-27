@@ -24,6 +24,7 @@ We know you hate plugins that slow down your build or litter your workspace with
 
 - **Blazing Fast:** Written with raw NIO `Files.walkFileTree` and a 64KiB streaming buffer. It recursively seals a 500-module multi-module project in milliseconds.
 - **Zero Pollution:** Uses a clean, centralized ledger inside your `target/` directory instead of vomiting `.sha` sidecar files all over your pristine source tree.
+- **Broad Compatibility:** Requires only Maven 3.8+ and JDK 8+, making it accessible to virtually every existing Maven project without toolchain upgrades.
 - **Cross-OS Native:** Automatically sanitizes Windows/Linux line-endings (`\r\n` -> `\n`) in-memory, ensuring Mac and Windows developers generate identical cryptographic fingerprints.
 - **Opt-Out Any Time:** Need to quickly iterate locally? Just run `mvn install -Dai.integrity.skip=true` to skip protections seamlessly.
 
@@ -51,13 +52,13 @@ Add the plugin to your `pom.xml`. The plugin seals your AI instruction files at 
 and verifies them at `test`. A centralized ledger is written to `target/` — no sidecar files
 in your source tree.
 
-The plugin is available on Maven Central as of version 0.9.0.
+The plugin is available on Maven Central as of version 0.10.0.
 
 ```xml
 <plugin>
     <groupId>com.intsof</groupId>
     <artifactId>ai-build-integrity-maven-plugin</artifactId>
-    <version>0.9.0</version>
+    <version>0.10.0</version>
     <configuration>
         <!-- Centralized ledger: no sidecar files in your source tree -->
         <hashFileMode>CENTRAL</hashFileMode>
@@ -98,7 +99,7 @@ tampering you must verify in **every module**. The correct architecture is:
             <plugin>
                 <groupId>com.intsof</groupId>
                 <artifactId>ai-build-integrity-maven-plugin</artifactId>
-                <version>0.9.0-SNAPSHOT</version>
+                <version>0.10.0</version>
                 <configuration>
                     <hashFileMode>CENTRAL</hashFileMode>
                     <!-- Scan the entire repo, not just the current module's basedir -->

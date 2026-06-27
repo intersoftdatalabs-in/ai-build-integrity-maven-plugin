@@ -1,6 +1,6 @@
 - Maven Site documentation is for end-users of the plugin.
 - CONTRIBUTING.md is for developers of the plugin.
-- Java 11 compatibility is required for the plugin.
+- Java 8 compatibility is required for the plugin.
 - The plugin should be fast and lightweight for both single-module projects and large multi-module projects.
 - Runtime depencies should be avoided. Use Maven API dependencies instead.
 - All generated code must have a matching unit test that compiles and passes.

@@ -21,6 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -73,7 +74,7 @@ class GitIgnoreAwareFileVisitorTest {
     //   valid_dir/
     //     file.txt
 
-    Files.writeString(tempDir.resolve(".gitignore"), "ignored_dir/\n");
+    Files.write(tempDir.resolve(".gitignore"), ("ignored_dir/\n").getBytes(StandardCharsets.UTF_8));
 
     Path ignoredDir = tempDir.resolve("ignored_dir");
     Path validDir = tempDir.resolve("valid_dir");
@@ -82,8 +83,8 @@ class GitIgnoreAwareFileVisitorTest {
 
     Path ignoredFile = ignoredDir.resolve("file.txt");
     Path validFile = validDir.resolve("file.txt");
-    Files.writeString(ignoredFile, "ignored");
-    Files.writeString(validFile, "valid");
+    Files.write(ignoredFile, "ignored".getBytes(StandardCharsets.UTF_8));
+    Files.write(validFile, "valid".getBytes(StandardCharsets.UTF_8));
 
     GitIgnoreAwareFileVisitor visitor =
         new GitIgnoreAwareFileVisitor(
@@ -125,10 +126,10 @@ class GitIgnoreAwareFileVisitorTest {
 
   @Test
   void testForceIncludesOverridesGitIgnore() throws IOException {
-    Files.writeString(tempDir.resolve(".gitignore"), "*.log\n");
+    Files.write(tempDir.resolve(".gitignore"), ("*.log\n").getBytes(StandardCharsets.UTF_8));
 
     Path logFile = tempDir.resolve("application.log");
-    Files.writeString(logFile, "log");
+    Files.write(logFile, "log".getBytes(StandardCharsets.UTF_8));
 
     // Create a PathMatcher that matches *.log
     PathMatcher logMatcher = tempDir.getFileSystem().getPathMatcher("glob:**/*.log");
@@ -150,7 +151,7 @@ class GitIgnoreAwareFileVisitorTest {
     // SKIP_SUBTREE!
 
     // Let's create an ignored directory
-    Files.writeString(tempDir.resolve(".gitignore"), "logs/\n");
+    Files.write(tempDir.resolve(".gitignore"), ("logs/\n").getBytes(StandardCharsets.UTF_8));
     Path logsDir = tempDir.resolve("logs");
     Files.createDirectory(logsDir);
 
