@@ -17,6 +17,7 @@ package com.intsof.ai.build.integrity;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
@@ -80,7 +81,7 @@ public final class HashUtils {
     MessageDigest digest = MessageDigest.getInstance(algorithm);
 
     if (normalizeLineEndings) {
-      String content = Files.readString(file, java.nio.charset.StandardCharsets.UTF_8);
+      String content = new String(Files.readAllBytes(file), StandardCharsets.UTF_8);
       String normalized = content.replace("\r\n", "\n");
       digest.update(normalized.getBytes(java.nio.charset.StandardCharsets.UTF_8));
     } else {

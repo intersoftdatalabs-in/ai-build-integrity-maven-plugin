@@ -19,6 +19,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import java.lang.reflect.Field;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import org.apache.maven.execution.MavenExecutionRequest;
@@ -69,7 +70,8 @@ class HashGeneratorMojoTest {
     void shouldGenerateHashFiles() throws Exception {
       // Given
       Path mdFile = tempDir.resolve("AGENTS.md");
-      Files.writeString(mdFile, "# AI Agent Instructions\nDo the thing.");
+      Files.write(
+          mdFile, "# AI Agent Instructions\nDo the thing.".getBytes(StandardCharsets.UTF_8));
 
       // When
       mojo.execute();
@@ -78,7 +80,7 @@ class HashGeneratorMojoTest {
       Path hashFile = tempDir.resolve("AGENTS.md.sha256");
       assertTrue(Files.exists(hashFile), "Hash file should exist");
 
-      String hashContent = Files.readString(hashFile);
+      String hashContent = new String(Files.readAllBytes(hashFile), StandardCharsets.UTF_8);
       assertTrue(hashContent.contains("AGENTS.md"));
       String hashValue = hashContent.split("\\s+")[0];
       assertEquals(64, hashValue.length(), "SHA-256 hex should be 64 chars");
@@ -89,7 +91,7 @@ class HashGeneratorMojoTest {
     void shouldGenerateSha512Files() throws Exception {
       // Given
       setField(mojo, "algorithmBits", 512);
-      Files.writeString(tempDir.resolve("AGENTS.md"), "content");
+      Files.write(tempDir.resolve("AGENTS.md"), "content".getBytes(StandardCharsets.UTF_8));
 
       // When
       mojo.execute();
@@ -97,7 +99,8 @@ class HashGeneratorMojoTest {
       // Then: .sha512 extension used (auto mode)
       Path hashFile = tempDir.resolve("AGENTS.md.sha512");
       assertTrue(Files.exists(hashFile), ".sha512 file should exist");
-      String hashValue = Files.readString(hashFile).split("\\s+")[0];
+      String hashValue =
+          new String(Files.readAllBytes(hashFile), StandardCharsets.UTF_8).split("\\s+")[0];
       assertEquals(128, hashValue.length(), "SHA-512 hex should be 128 chars");
     }
 
@@ -111,11 +114,11 @@ class HashGeneratorMojoTest {
     @DisplayName("should generate hashes for files in nested directories")
     void shouldGenerateHashesForMultipleFiles() throws Exception {
       // Given
-      Files.writeString(tempDir.resolve("README.md"), "# Readme");
-      Files.writeString(tempDir.resolve("AGENTS.md"), "# Agents");
+      Files.write(tempDir.resolve("README.md"), "# Readme".getBytes(StandardCharsets.UTF_8));
+      Files.write(tempDir.resolve("AGENTS.md"), "# Agents".getBytes(StandardCharsets.UTF_8));
       Path subDir = tempDir.resolve("sub");
       Files.createDirectory(subDir);
-      Files.writeString(subDir.resolve("SKILL.md"), "# Skill");
+      Files.write(subDir.resolve("SKILL.md"), "# Skill".getBytes(StandardCharsets.UTF_8));
 
       // When
       mojo.execute();
@@ -130,8 +133,10 @@ class HashGeneratorMojoTest {
     @DisplayName("should not create .sha256.sha256 files")
     void shouldExcludeHashFiles() throws Exception {
       // Given
-      Files.writeString(tempDir.resolve("AGENTS.md"), "content");
-      Files.writeString(tempDir.resolve("AGENTS.md.sha256"), "oldhash  AGENTS.md\n");
+      Files.write(tempDir.resolve("AGENTS.md"), "content".getBytes(StandardCharsets.UTF_8));
+      Files.write(
+          tempDir.resolve("AGENTS.md.sha256"),
+          "oldhash  AGENTS.md\n".getBytes(StandardCharsets.UTF_8));
 
       // When
       mojo.execute();
@@ -145,30 +150,34 @@ class HashGeneratorMojoTest {
     void shouldSkipExistingWhenConfigured() throws Exception {
       // Given
       setField(mojo, "skipExisting", true);
-      Files.writeString(tempDir.resolve("AGENTS.md"), "content");
+      Files.write(tempDir.resolve("AGENTS.md"), "content".getBytes(StandardCharsets.UTF_8));
       Path hashFile = tempDir.resolve("AGENTS.md.sha256");
-      Files.writeString(hashFile, "existinghash  AGENTS.md\n");
+      Files.write(hashFile, "existinghash  AGENTS.md\n".getBytes(StandardCharsets.UTF_8));
 
       // When
       mojo.execute();
 
       // Then
-      assertTrue(Files.readString(hashFile).startsWith("existinghash"));
+      assertTrue(
+          new String(Files.readAllBytes(hashFile), StandardCharsets.UTF_8)
+              .startsWith("existinghash"));
     }
 
     @Test
     @DisplayName("should overwrite existing hash files when skipExisting is false")
     void shouldOverwriteExistingWhenNotSkipping() throws Exception {
       // Given
-      Files.writeString(tempDir.resolve("AGENTS.md"), "content");
+      Files.write(tempDir.resolve("AGENTS.md"), "content".getBytes(StandardCharsets.UTF_8));
       Path hashFile = tempDir.resolve("AGENTS.md.sha256");
-      Files.writeString(hashFile, "existinghash  AGENTS.md\n");
+      Files.write(hashFile, "existinghash  AGENTS.md\n".getBytes(StandardCharsets.UTF_8));
 
       // When
       mojo.execute();
 
       // Then
-      assertFalse(Files.readString(hashFile).startsWith("existinghash"));
+      assertFalse(
+          new String(Files.readAllBytes(hashFile), StandardCharsets.UTF_8)
+              .startsWith("existinghash"));
     }
 
     @Test
@@ -188,8 +197,8 @@ class HashGeneratorMojoTest {
       // Given
       Path targetDir = tempDir.resolve("target");
       Files.createDirectory(targetDir);
-      Files.writeString(targetDir.resolve("generated.md"), "generated");
-      Files.writeString(tempDir.resolve("AGENTS.md"), "content");
+      Files.write(targetDir.resolve("generated.md"), "generated".getBytes(StandardCharsets.UTF_8));
+      Files.write(tempDir.resolve("AGENTS.md"), "content".getBytes(StandardCharsets.UTF_8));
 
       // When
       mojo.execute();
@@ -205,11 +214,11 @@ class HashGeneratorMojoTest {
       // Given
       Path gitDir = tempDir.resolve(".git");
       Files.createDirectory(gitDir);
-      Files.writeString(gitDir.resolve("HEAD.md"), "ref");
+      Files.write(gitDir.resolve("HEAD.md"), "ref".getBytes(StandardCharsets.UTF_8));
       Path nmDir = tempDir.resolve("node_modules");
       Files.createDirectory(nmDir);
-      Files.writeString(nmDir.resolve("package.md"), "pkg");
-      Files.writeString(tempDir.resolve("AGENTS.md"), "content");
+      Files.write(nmDir.resolve("package.md"), "pkg".getBytes(StandardCharsets.UTF_8));
+      Files.write(tempDir.resolve("AGENTS.md"), "content".getBytes(StandardCharsets.UTF_8));
 
       // When
       mojo.execute();
@@ -226,7 +235,7 @@ class HashGeneratorMojoTest {
       // Given
       setField(mojo, "baseDir", "");
       when(project.getBasedir()).thenReturn(tempDir.toFile());
-      Files.writeString(tempDir.resolve("test.md"), "content");
+      Files.write(tempDir.resolve("test.md"), "content".getBytes(StandardCharsets.UTF_8));
 
       // When
       mojo.execute();
@@ -240,7 +249,7 @@ class HashGeneratorMojoTest {
     void shouldSupportExplicitExtension() throws Exception {
       // Given
       setField(mojo, "outputExtension", ".hash");
-      Files.writeString(tempDir.resolve("AGENTS.md"), "content");
+      Files.write(tempDir.resolve("AGENTS.md"), "content".getBytes(StandardCharsets.UTF_8));
 
       // When
       mojo.execute();
@@ -266,13 +275,13 @@ class HashGeneratorMojoTest {
     @DisplayName("should generate a central ledger file")
     void shouldGenerateCentralLedger() throws Exception {
       Path mdFile = tempDir.resolve("AGENTS.md");
-      Files.writeString(mdFile, "content");
+      Files.write(mdFile, "content".getBytes(StandardCharsets.UTF_8));
 
       mojo.execute();
 
       Path centralFile = tempDir.resolve("ai-integrity.sha256");
       assertTrue(Files.exists(centralFile));
-      String content = Files.readString(centralFile);
+      String content = new String(Files.readAllBytes(centralFile), StandardCharsets.UTF_8);
       assertTrue(content.contains("AGENTS.md"));
       assertFalse(Files.exists(tempDir.resolve("AGENTS.md.sha256")), "Should not create sidecar");
     }
@@ -282,7 +291,7 @@ class HashGeneratorMojoTest {
     void shouldUseDefaultCentralLedger() throws Exception {
       setField(mojo, "centralHashFile", "");
       Path mdFile = tempDir.resolve("AGENTS.md");
-      Files.writeString(mdFile, "content");
+      Files.write(mdFile, "content".getBytes(StandardCharsets.UTF_8));
 
       mojo.execute();
 
@@ -304,7 +313,7 @@ class HashGeneratorMojoTest {
 
       when(project.getArtifactId()).thenReturn("module-a");
       setField(mojo, "resumeFromModule", "module-b");
-      Files.writeString(tempDir.resolve("AGENTS.md"), "content");
+      Files.write(tempDir.resolve("AGENTS.md"), "content".getBytes(StandardCharsets.UTF_8));
 
       mojo.execute();
 
@@ -321,7 +330,7 @@ class HashGeneratorMojoTest {
 
       when(project.getArtifactId()).thenReturn("module-a");
       setField(mojo, "resumeFromModule", "module-a");
-      Files.writeString(tempDir.resolve("AGENTS.md"), "content");
+      Files.write(tempDir.resolve("AGENTS.md"), "content".getBytes(StandardCharsets.UTF_8));
 
       mojo.execute();
 
@@ -364,7 +373,7 @@ class HashGeneratorMojoTest {
     void shouldHideHashFiles() throws Exception {
       setField(mojo, "hideHashFiles", true);
       Path mdFile = tempDir.resolve("AGENTS.md");
-      Files.writeString(mdFile, "content");
+      Files.write(mdFile, "content".getBytes(StandardCharsets.UTF_8));
 
       mojo.execute();
 
@@ -381,7 +390,7 @@ class HashGeneratorMojoTest {
     void shouldUseCustomOutputExtension() throws Exception {
       setField(mojo, "outputExtension", ".customhash");
       Path mdFile = tempDir.resolve("AGENTS.md");
-      Files.writeString(mdFile, "content");
+      Files.write(mdFile, "content".getBytes(StandardCharsets.UTF_8));
 
       assertDoesNotThrow(() -> mojo.execute());
 
@@ -394,7 +403,7 @@ class HashGeneratorMojoTest {
       setField(mojo, "baseDir", "");
       when(project.getBasedir()).thenReturn(tempDir.toFile());
       Path mdFile = tempDir.resolve("AGENTS.md");
-      Files.writeString(mdFile, "content");
+      Files.write(mdFile, "content".getBytes(StandardCharsets.UTF_8));
 
       assertDoesNotThrow(() -> mojo.execute());
 
@@ -406,7 +415,7 @@ class HashGeneratorMojoTest {
     void shouldHandleEmptySkipDirs() throws Exception {
       setField(mojo, "skipDirs", " , \t,target,");
       Path mdFile = tempDir.resolve("AGENTS.md");
-      Files.writeString(mdFile, "content");
+      Files.write(mdFile, "content".getBytes(StandardCharsets.UTF_8));
 
       assertDoesNotThrow(() -> mojo.execute());
 
@@ -420,7 +429,7 @@ class HashGeneratorMojoTest {
       Path srcTest = tempDir.resolve("src").resolve("test");
       Files.createDirectories(srcTest);
       Path mdFile = srcTest.resolve("AGENTS.md");
-      Files.writeString(mdFile, "content");
+      Files.write(mdFile, "content".getBytes(StandardCharsets.UTF_8));
 
       assertDoesNotThrow(() -> mojo.execute());
 
@@ -433,12 +442,12 @@ class HashGeneratorMojoTest {
       setField(mojo, "gitignoreAutoExclude", true);
       setField(mojo, "forceIncludes", "**/*.txt");
 
-      Files.writeString(tempDir.resolve(".gitignore"), "*.md\n");
+      Files.write(tempDir.resolve(".gitignore"), ("*.md\n").getBytes(StandardCharsets.UTF_8));
 
       Path ignoredMdFile = tempDir.resolve("AGENTS.md");
-      Files.writeString(ignoredMdFile, "content");
+      Files.write(ignoredMdFile, "content".getBytes(StandardCharsets.UTF_8));
       Path forcedTxtFile = tempDir.resolve("forced.txt");
-      Files.writeString(forcedTxtFile, "content");
+      Files.write(forcedTxtFile, "content".getBytes(StandardCharsets.UTF_8));
 
       mojo.execute();
 

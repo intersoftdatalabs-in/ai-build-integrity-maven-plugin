@@ -20,6 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -34,9 +35,10 @@ class GitIgnoreParserTest {
   @Test
   void testParseIgnoresCommentsAndEmptyLines() throws IOException {
     Path gitignore = tempDir.resolve(".gitignore");
-    Files.writeString(
+    Files.write(
         gitignore,
-        "# This is a comment\n" + "\n" + "   \n" + "!negated_rule_not_supported\n" + "target\n");
+        ("# This is a comment\n" + "\n" + "   \n" + "!negated_rule_not_supported\n" + "target\n")
+            .getBytes(StandardCharsets.UTF_8));
 
     List<Predicate<Path>> predicates = GitIgnoreParser.parse(gitignore);
 
@@ -47,7 +49,7 @@ class GitIgnoreParserTest {
   @Test
   void testExactNameMatch() throws IOException {
     Path gitignore = tempDir.resolve(".gitignore");
-    Files.writeString(gitignore, "node_modules\n");
+    Files.write(gitignore, "node_modules\n".getBytes(StandardCharsets.UTF_8));
 
     List<Predicate<Path>> predicates = GitIgnoreParser.parse(gitignore);
     assertEquals(1, predicates.size());
@@ -61,7 +63,7 @@ class GitIgnoreParserTest {
   @Test
   void testSuffixMatch() throws IOException {
     Path gitignore = tempDir.resolve(".gitignore");
-    Files.writeString(gitignore, "*.class\n");
+    Files.write(gitignore, ("*.class\n").getBytes(StandardCharsets.UTF_8));
 
     List<Predicate<Path>> predicates = GitIgnoreParser.parse(gitignore);
     assertEquals(1, predicates.size());
@@ -75,7 +77,7 @@ class GitIgnoreParserTest {
   @Test
   void testPrefixMatch() throws IOException {
     Path gitignore = tempDir.resolve(".gitignore");
-    Files.writeString(gitignore, "temp_*\n");
+    Files.write(gitignore, ("temp_*\n").getBytes(StandardCharsets.UTF_8));
 
     List<Predicate<Path>> predicates = GitIgnoreParser.parse(gitignore);
     assertEquals(1, predicates.size());
@@ -90,7 +92,7 @@ class GitIgnoreParserTest {
   void testAnchoredMatch() throws IOException {
     Path gitignore = tempDir.resolve(".gitignore");
     // Should match exact path relative to .gitignore
-    Files.writeString(gitignore, "/build/\n/test.log\n");
+    Files.write(gitignore, ("/build/\n/test.log\n").getBytes(StandardCharsets.UTF_8));
 
     List<Predicate<Path>> predicates = GitIgnoreParser.parse(gitignore);
     assertEquals(2, predicates.size());
@@ -121,7 +123,7 @@ class GitIgnoreParserTest {
   @Test
   void testWildcardMatches() throws IOException {
     Path gitignore = tempDir.resolve(".gitignore");
-    Files.writeString(gitignore, "foo/**/*.log\n");
+    Files.write(gitignore, ("foo/**/*.log\n").getBytes(StandardCharsets.UTF_8));
 
     List<Predicate<Path>> predicates = GitIgnoreParser.parse(gitignore);
     assertEquals(1, predicates.size());
@@ -142,7 +144,7 @@ class GitIgnoreParserTest {
   void testPatternEscaping() throws IOException {
     Path gitignore = tempDir.resolve(".gitignore");
     // Testing characters that need escaping in regex
-    Files.writeString(gitignore, "some.file[1]\n");
+    Files.write(gitignore, "some.file[1]\n".getBytes(StandardCharsets.UTF_8));
 
     List<Predicate<Path>> predicates = GitIgnoreParser.parse(gitignore);
     assertEquals(1, predicates.size());

@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.10.0] - 2026-06-03
+## [0.10.0] - 2026-06-27
 
 ### Added
 
@@ -19,6 +19,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Java Compatibility**: Updated minimum JDK requirement from 11 to 8, replacing Java 11+
+  APIs (`String.strip()`, `Files.writeString()`, `Files.readString()`, `Set.of()`) with
+  Java 8 equivalents (`String.trim()`, `Files.write()`/`Files.readAllBytes()`, `new HashSet<>()`).
+- **Maven Compatibility**: Updated minimum Maven prerequisite from 3.9.0 to 3.8.0 and
+  aligned Maven API dependencies (`maven-plugin-api`, `maven-core`) from 3.9.16 to 3.8.8.
 - **Audit Reports**: Standardized the `file` field in JSON audit reports to use relative paths consistently across both `CENTRAL` and `SIDECAR` modes.
 - **Documentation**: Renamed all instances of "monorepo" to "multi-module project" for better alignment with Maven terminology.
 

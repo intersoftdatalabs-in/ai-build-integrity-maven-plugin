@@ -258,7 +258,7 @@ public class HashCleanMojo extends AbstractMojo {
     Set<String> result = new HashSet<>();
     if (skipDirs != null) {
       for (String dir : skipDirs.split(",")) {
-        String trimmed = dir.strip();
+        String trimmed = dir.trim();
         if (!trimmed.isEmpty()) {
           result.add(trimmed);
         }

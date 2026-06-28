@@ -19,6 +19,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import java.lang.reflect.Field;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import org.apache.maven.plugin.logging.Log;
@@ -63,11 +64,11 @@ class HashCleanMojoTest {
       // Given
       Path hashFile1 = tempDir.resolve("AGENTS.md.sha256");
       Path hashFile2 = tempDir.resolve("SKILL.md.sha256");
-      Files.writeString(hashFile1, "hash1");
-      Files.writeString(hashFile2, "hash2");
+      Files.write(hashFile1, "hash1".getBytes(StandardCharsets.UTF_8));
+      Files.write(hashFile2, "hash2".getBytes(StandardCharsets.UTF_8));
 
       Path regularFile = tempDir.resolve("AGENTS.md");
-      Files.writeString(regularFile, "content");
+      Files.write(regularFile, "content".getBytes(StandardCharsets.UTF_8));
 
       // When/Then
       assertDoesNotThrow(() -> mojo.execute());
@@ -81,7 +82,7 @@ class HashCleanMojoTest {
     @DisplayName("should warn and return when no hash files are found")
     void shouldWarnWhenNoHashFiles() throws Exception {
       // Given
-      Files.writeString(tempDir.resolve("README.md"), "content");
+      Files.write(tempDir.resolve("README.md"), "content".getBytes(StandardCharsets.UTF_8));
 
       // When/Then
       assertDoesNotThrow(() -> mojo.execute());
@@ -95,10 +96,10 @@ class HashCleanMojoTest {
       Path targetDir = tempDir.resolve("target");
       Files.createDirectory(targetDir);
       Path skippedHash = targetDir.resolve("generated.md.sha256");
-      Files.writeString(skippedHash, "hash");
+      Files.write(skippedHash, "hash".getBytes(StandardCharsets.UTF_8));
 
       Path validHash = tempDir.resolve("AGENTS.md.sha256");
-      Files.writeString(validHash, "hash");
+      Files.write(validHash, "hash".getBytes(StandardCharsets.UTF_8));
 
       // When/Then
       assertDoesNotThrow(() -> mojo.execute());
@@ -116,7 +117,7 @@ class HashCleanMojoTest {
       setField(mojo, "baseDir", "");
       when(project.getBasedir()).thenReturn(tempDir.toFile());
       Path hashFile = tempDir.resolve("test.md.sha256");
-      Files.writeString(hashFile, "hash");
+      Files.write(hashFile, "hash".getBytes(StandardCharsets.UTF_8));
 
       // When/Then
       assertDoesNotThrow(() -> mojo.execute());
@@ -150,7 +151,7 @@ class HashCleanMojoTest {
     @DisplayName("should delete central ledger file")
     void shouldDeleteCentralLedger() throws Exception {
       Path centralFile = tempDir.resolve("ai-integrity.sha256");
-      Files.writeString(centralFile, "hash  AGENTS.md\n");
+      Files.write(centralFile, "hash  AGENTS.md\n".getBytes(StandardCharsets.UTF_8));
 
       mojo.execute();
 
@@ -170,7 +171,7 @@ class HashCleanMojoTest {
       setField(mojo, "centralHashFile", "");
       Path defaultCentralFile = tempDir.resolve("target").resolve("ai-integrity.sha256");
       Files.createDirectories(defaultCentralFile.getParent());
-      Files.writeString(defaultCentralFile, "hash");
+      Files.write(defaultCentralFile, "hash".getBytes(StandardCharsets.UTF_8));
 
       mojo.execute();
 
@@ -217,9 +218,9 @@ class HashCleanMojoTest {
     void shouldUseCustomOutputExtension() throws Exception {
       setField(mojo, "outputExtension", ".customhash");
       Path mdFile = tempDir.resolve("AGENTS.md");
-      Files.writeString(mdFile, "content");
+      Files.write(mdFile, "content".getBytes(StandardCharsets.UTF_8));
       Path hashFile = tempDir.resolve("AGENTS.md.customhash");
-      Files.writeString(hashFile, "hash");
+      Files.write(hashFile, "hash".getBytes(StandardCharsets.UTF_8));
 
       mojo.execute();
 
@@ -231,9 +232,9 @@ class HashCleanMojoTest {
     void shouldHandleEmptySkipDirs() throws Exception {
       setField(mojo, "skipDirs", " , \t,target,");
       Path mdFile = tempDir.resolve("AGENTS.md");
-      Files.writeString(mdFile, "content");
+      Files.write(mdFile, "content".getBytes(StandardCharsets.UTF_8));
       Path hashFile = tempDir.resolve("AGENTS.md.sha256");
-      Files.writeString(hashFile, "hash");
+      Files.write(hashFile, "hash".getBytes(StandardCharsets.UTF_8));
 
       mojo.execute();
 
@@ -246,15 +247,16 @@ class HashCleanMojoTest {
       setField(mojo, "gitignoreAutoExclude", true);
       setField(mojo, "forceIncludes", "**/*.txt.sha256");
 
-      Files.writeString(tempDir.resolve(".gitignore"), "**/*.md.sha256\n");
+      Files.write(
+          tempDir.resolve(".gitignore"), ("**/*.md.sha256\n").getBytes(StandardCharsets.UTF_8));
 
       Path subdir = tempDir.resolve("subdir");
       Files.createDirectory(subdir);
 
       Path ignoredMdFile = subdir.resolve("AGENTS.md.sha256");
-      Files.writeString(ignoredMdFile, "hash");
+      Files.write(ignoredMdFile, "hash".getBytes(StandardCharsets.UTF_8));
       Path forcedTxtFile = subdir.resolve("forced.txt.sha256");
-      Files.writeString(forcedTxtFile, "hash");
+      Files.write(forcedTxtFile, "hash".getBytes(StandardCharsets.UTF_8));
 
       mojo.execute();
 

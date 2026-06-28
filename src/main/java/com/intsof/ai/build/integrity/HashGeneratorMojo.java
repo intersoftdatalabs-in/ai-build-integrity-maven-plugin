@@ -16,6 +16,7 @@
 package com.intsof.ai.build.integrity;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystem;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
@@ -283,7 +284,7 @@ public class HashGeneratorMojo extends AbstractMojo {
             getLog().error("Failed to hash " + file + ": " + e.getMessage());
           }
         }
-        Files.writeString(centralFilePath, sb.toString());
+        Files.write(centralFilePath, sb.toString().getBytes(StandardCharsets.UTF_8));
         getLog().info("Central hash file written: " + centralFilePath);
       } catch (IOException e) {
         throw new MojoExecutionException(
@@ -304,7 +305,7 @@ public class HashGeneratorMojo extends AbstractMojo {
         try {
           String hash = HashUtils.computeHash(file, algorithm, normalizeLineEndings);
           String hashContent = hash + "  " + file.getFileName() + "\n";
-          Files.writeString(hashFile, hashContent);
+          Files.write(hashFile, hashContent.getBytes(StandardCharsets.UTF_8));
 
           if (hideHashFiles) {
             try {
@@ -369,7 +370,7 @@ public class HashGeneratorMojo extends AbstractMojo {
     Set<String> result = new HashSet<>();
     if (skipDirs != null) {
       for (String dir : skipDirs.split(",")) {
-        String trimmed = dir.strip();
+        String trimmed = dir.trim();
         if (!trimmed.isEmpty()) {
           result.add(trimmed);
         }
