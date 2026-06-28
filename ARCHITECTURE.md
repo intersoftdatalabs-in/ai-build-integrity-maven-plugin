@@ -10,28 +10,40 @@ graph TD
         M1[generate-hashes]
         M2[verify-hashes]
         M3[clean-hashes]
+        M4[generate-artifact-digests]
+        M5[verify-artifact-digests]
+        M6[clean-artifact-digests]
     end
 
     subgraph Core Engine
         HE[Hashing Engine]
         LU[HashUtils]
         GV[GitIgnoreAwareFileVisitor]
+        AD[ArtifactDigestsUtils]
     end
 
     subgraph Storage & Output
         SL[Central Ledger - target/ai-integrity.sha256]
         AR[Audit Report - target/ai-integrity-report.json]
         SC[Sidecar Files - .*.sha256]
+        ADL[Artifact Digest Ledger - target/ai-integrity-artifacts.sha256]
+        ADR[Artifact Report - target/ai-integrity-artifacts-report.json]
     end
 
     M1 --> HE
     M2 --> HE
     M3 --> HE
+    M4 --> AD
+    M5 --> AD
+    M6 --> AD
+    AD --> LU
     HE --> LU
     LU --> GV
     HE --> SL
     HE --> AR
     HE --> SC
+    AD --> ADL
+    AD --> ADR
 ```
 
 ## Core Components
@@ -54,7 +66,14 @@ graph TD
 - A custom file visitor that respects `.gitignore` patterns.
 - Optimized to prune subtrees early (e.g., `target/`, `.git/`, `node_modules/`) to maintain high throughput.
 
-### 4. Integrity Reporting
+### 4. Artifact Digest Engine (`ArtifactDigestsUtils`)
+
+- Provides **streaming-only** hash computation for binary artifacts (JARs, WARs, ZIPs).
+- Never loads full artifact files into heap memory — critical for large JARs.
+- Implements canonical path enforcement to prevent path traversal attacks.
+- Validates algorithm availability at runtime and warns on compromised algorithms (MD5, SHA-1).
+
+### 5. Integrity Reporting
 
 - **Central Ledger**: A single source of truth for the entire project.
 - **Audit Reports**: JSON-formatted logs designed for ingestion by SIEM systems (Splunk, DataDog, etc.).

@@ -200,3 +200,96 @@ To leverage every configuration parameter exposed by the plugin engine, consult 
 </configuration>
 ```
 
+---
+
+## 5. Artifact Digests (JAR/WAR/ZIP)
+
+Generate cryptographic digests for your build artifacts to ensure supply-chain integrity.
+
+### Quick Start: Artifact Digest Generation
+
+```xml
+<build>
+    <plugins>
+        <plugin>
+            <groupId>com.intsof</groupId>
+            <artifactId>ai-build-integrity-maven-plugin</artifactId>
+            <version>0.10.0</version>
+            <executions>
+                <execution>
+                    <id>generate-artifacts</id>
+                    <goals><goal>generate-artifact-digests</goal></goals>
+                    <phase>package</phase>
+                </execution>
+                <execution>
+                    <id>verify-artifacts</id>
+                    <goals><goal>verify-artifact-digests</goal></goals>
+                    <phase>verify</phase>
+                </execution>
+                <execution>
+                    <id>clean-artifacts</id>
+                    <goals><goal>clean-artifact-digests</goal></goals>
+                    <phase>clean</phase>
+                </execution>
+            </executions>
+        </plugin>
+    </plugins>
+</build>
+```
+
+### Artifact Digest Goals
+
+|            Goal             |   Phase   |             Purpose              |
+|-----------------------------|-----------|----------------------------------|
+| `generate-artifact-digests` | `package` | Hash the module's artifacts      |
+| `verify-artifact-digests`   | `verify`  | Ensure artifacts haven't changed |
+| `clean-artifact-digests`    | `clean`   | Remove all digest files          |
+
+### Full Artifact Digest Options
+
+```xml
+<configuration>
+    <!-- Comma-separated glob patterns for artifacts to hash -->
+    <artifactIncludes>**/*.jar,**/*.war,**/*.zip</artifactIncludes>
+
+    <!-- Exclude sources and javadoc JARs by default -->
+    <artifactExcludes>**/*-sources.jar,**/*-javadoc.jar</artifactExcludes>
+
+    <!-- Set to true to include attached artifacts -->
+    <includeAttachedArtifacts>false</includeAttachedArtifacts>
+
+    <!-- Algorithms: SHA-256 (default), SHA-384, SHA-512, MD5, SHA-1 -->
+    <algorithms>SHA-256</algorithms>
+
+    <!-- Emit WARNING when using compromised algorithms (MD5, SHA-1) -->
+    <warnOnCompromisedAlgorithm>true</warnOnCompromisedAlgorithm>
+
+    <!-- CENTRAL: single ledger file; SIDECAR: .jar.sha256 files alongside artifacts -->
+    <hashFileMode>SIDECAR</hashFileMode>
+
+    <!-- For CENTRAL mode: path to the shared ledger -->
+    <centralDigestFile>${project.build.directory}/ai-integrity-artifacts.sha256</centralDigestFile>
+
+    <!-- Generate aggregate digest (hash of all digests) for quick nightly verification -->
+    <generateAggregateDigest>false</generateAggregateDigest>
+
+    <!-- (VERIFY ONLY) Bypass build failures on mismatch -->
+    <failOnError>true</failOnError>
+
+    <!-- (VERIFY ONLY) Emit JSON audit report for SIEM ingestion -->
+    <generateAuditReport>true</generateAuditReport>
+
+    <!-- (VERIFY ONLY) Path to the audit report file -->
+    <centralReportFile>${project.build.directory}/ai-integrity-artifacts-report.json</centralReportFile>
+
+    <!-- (CLEAN ONLY) Also remove aggregate digest files -->
+    <cleanAggregateDigests>true</cleanAggregateDigests>
+</configuration>
+```
+
+### Security Notes
+
+- **Streaming-only hashing**: Artifact digests use streaming hash computation that never loads full files into memory
+- **Path traversal protection**: Artifact paths are validated against canonical path escaping
+- **Compromised algorithm warnings**: MD5 and SHA-1 emit warnings as they are vulnerable to collision attacks
+

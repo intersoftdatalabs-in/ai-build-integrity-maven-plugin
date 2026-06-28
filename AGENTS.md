@@ -1,6 +1,8 @@
 - Maven Site documentation is for end-users of the plugin.
 - CONTRIBUTING.md is for developers of the plugin.
 - Java 8 compatibility is required for the plugin.
+- **BUILD:** Use Java 21 to run Maven (`JAVA_HOME=/usr/lib/jvm/java-1.21.0-openjdk-amd64`). Spotless Maven plugin requires Java 11+ to load.
+- **DEPLOY:** The plugin targets Java 1.8 release (`<maven.compiler.release>8</maven.compiler.release>`). Compiled classes are Java 8 compatible.
 - The plugin should be fast and lightweight for both single-module projects and large multi-module projects.
 - Runtime depencies should be avoided. Use Maven API dependencies instead.
 - All generated code must have a matching unit test that compiles and passes.

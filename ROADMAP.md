@@ -4,9 +4,15 @@ Our goal is to provide absolute build integrity for AI-first development teams. 
 
 ## 🟢 Planned (Short Term)
 
-### 📦 Shipped Artifacts Ledger
+### 📦 Shipped Artifacts Ledger 🚧 **IN PROGRESS**
 
 Extend the hashing engine to generate an integrity ledger for the **final build artifacts** (JARs, WARs, ZIPs) in addition to source resources. This ensures that what is shipped to production matches exactly what was verified during the build.
+
+**Implementation Status:** Core components implemented:
+- `ArtifactDigestsGeneratorMojo` — generates digest files for build artifacts
+- `ArtifactDigestsVerifyMojo` — verifies artifact digests
+- `ArtifactDigestsCleanMojo` — removes generated digest files
+- `ArtifactDigestsUtils` — streaming-only hash computation with path traversal protection
 
 ### 🔑 Sigstore Integration
 

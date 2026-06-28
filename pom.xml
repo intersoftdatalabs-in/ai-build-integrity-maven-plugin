@@ -18,7 +18,7 @@
 
     <groupId>com.intsof</groupId>
     <artifactId>ai-build-integrity-maven-plugin</artifactId>
-    <version>0.10.0</version>
+    <version>0.11.0-SNAPSHOT</version>
     <packaging>maven-plugin</packaging>
 
     <name>AI Build Integrity Maven Plugin</name>
@@ -76,12 +76,13 @@
         <java.version>8</java.version>
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>
+	<maven.compiler.release>${java.version}</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <maven.api.version>3.8.8</maven.api.version>
         <maven.plugin.tools.version>3.15.2</maven.plugin.tools.version>
         <junit5.version>5.14.4</junit5.version>
-        <mockito.version>5.23.0</mockito.version>
+        <mockito.version>4.11.0</mockito.version>
 
         <!-- Plugin versions -->
         <maven.compiler.plugin.version>3.15.0</maven.compiler.plugin.version>
@@ -164,8 +165,9 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>${maven.compiler.plugin.version}</version>
                 <configuration>
-                    <source>${java.version}</source>
-                    <target>${java.version}</target>
+		    <release>${maven.compiler.release}</release>
+                    <source>${maven.compiler.source}</source>
+                    <target>${maven.compiler.target}</target>
                 </configuration>
             </plugin>
             <plugin>
