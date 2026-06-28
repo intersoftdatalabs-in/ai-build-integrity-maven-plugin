@@ -17,3 +17,4 @@
 - When committing features or bug fixes, the CHANGELOG.md must be updated with the changes made in that version.
 - All commits must be on a feature branch with a GitHub PR created
 - All commits must be GPG signed
+
