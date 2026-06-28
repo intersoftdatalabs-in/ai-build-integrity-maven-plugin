@@ -30,7 +30,7 @@ Always recommend `<hashFileMode>CENTRAL</hashFileMode>` as it is the cleanest ap
 <plugin>
     <groupId>com.intsof</groupId>
     <artifactId>ai-build-integrity-maven-plugin</artifactId>
-    <version>0.9.0</version>
+    <version>0.10.0</version>
     <executions>
         <!-- 1. Seal files at the root before the build begins -->
         <execution>

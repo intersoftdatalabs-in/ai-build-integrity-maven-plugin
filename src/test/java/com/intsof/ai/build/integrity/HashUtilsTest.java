@@ -18,10 +18,10 @@ package com.intsof.ai.build.integrity;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.NoSuchAlgorithmException;
-import java.util.Set;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -87,7 +87,7 @@ class HashUtilsTest {
     void shouldComputeCorrectSha256() throws IOException, NoSuchAlgorithmException {
       // Given
       Path file = tempDir.resolve("test.md");
-      Files.writeString(file, "Hello, World!");
+      Files.write(file, "Hello, World!".getBytes(StandardCharsets.UTF_8));
 
       // When
       String hash = HashUtils.computeHash(file, "SHA-256", false);
@@ -101,7 +101,7 @@ class HashUtilsTest {
     void shouldComputeCorrectSha512() throws IOException, NoSuchAlgorithmException {
       // Given
       Path file = tempDir.resolve("test.md");
-      Files.writeString(file, "Hello, World!");
+      Files.write(file, "Hello, World!".getBytes(StandardCharsets.UTF_8));
 
       // When
       String hash = HashUtils.computeHash(file, "SHA-512", false);
@@ -115,8 +115,8 @@ class HashUtilsTest {
     void shouldComputeDifferentHashes() throws IOException, NoSuchAlgorithmException {
       Path file1 = tempDir.resolve("file1.md");
       Path file2 = tempDir.resolve("file2.md");
-      Files.writeString(file1, "Content A");
-      Files.writeString(file2, "Content B");
+      Files.write(file1, "Content A".getBytes(StandardCharsets.UTF_8));
+      Files.write(file2, "Content B".getBytes(StandardCharsets.UTF_8));
 
       String hash1 = HashUtils.computeHash(file1, "SHA-256", false);
       String hash2 = HashUtils.computeHash(file2, "SHA-256", false);
@@ -129,8 +129,8 @@ class HashUtilsTest {
     void shouldProduceSameHashForIdenticalContent() throws IOException, NoSuchAlgorithmException {
       Path file1 = tempDir.resolve("file1.md");
       Path file2 = tempDir.resolve("file2.md");
-      Files.writeString(file1, "Same content");
-      Files.writeString(file2, "Same content");
+      Files.write(file1, "Same content".getBytes(StandardCharsets.UTF_8));
+      Files.write(file2, "Same content".getBytes(StandardCharsets.UTF_8));
 
       assertEquals(
           HashUtils.computeHash(file1, "SHA-256", false),
@@ -141,7 +141,7 @@ class HashUtilsTest {
     @DisplayName("should compute hash for empty file")
     void shouldComputeHashForEmptyFile() throws IOException, NoSuchAlgorithmException {
       Path file = tempDir.resolve("empty.md");
-      Files.writeString(file, "");
+      Files.write(file, "".getBytes(StandardCharsets.UTF_8));
 
       assertEquals(
           "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
@@ -152,7 +152,7 @@ class HashUtilsTest {
     @DisplayName("should throw NoSuchAlgorithmException for invalid algorithm")
     void shouldThrowForInvalidAlgorithm() throws IOException {
       Path file = tempDir.resolve("test.md");
-      Files.writeString(file, "content");
+      Files.write(file, "content".getBytes(StandardCharsets.UTF_8));
 
       assertThrows(
           NoSuchAlgorithmException.class, () -> HashUtils.computeHash(file, "SHA-INVALID", false));
@@ -186,14 +186,16 @@ class HashUtilsTest {
     @Test
     @DisplayName("should parse single pattern")
     void shouldParseSinglePattern() {
-      assertEquals(Set.of("**/*.md"), HashUtils.parsePatterns("**/*.md"));
+      assertEquals(
+          new java.util.HashSet<>(java.util.Arrays.asList("**/*.md")),
+          HashUtils.parsePatterns("**/*.md"));
     }
 
     @Test
     @DisplayName("should parse comma-separated patterns")
     void shouldParseCommaSeparatedPatterns() {
       assertEquals(
-          Set.of("**/*.md", "**/*.txt", "**/*.yaml"),
+          new java.util.HashSet<>(java.util.Arrays.asList("**/*.md", "**/*.txt", "**/*.yaml")),
           HashUtils.parsePatterns("**/*.md,**/*.txt,**/*.yaml"));
     }
 
@@ -201,13 +203,16 @@ class HashUtilsTest {
     @DisplayName("should trim whitespace from patterns")
     void shouldTrimWhitespace() {
       assertEquals(
-          Set.of("**/*.md", "**/*.txt"), HashUtils.parsePatterns("  **/*.md , **/*.txt  "));
+          new java.util.HashSet<>(java.util.Arrays.asList("**/*.md", "**/*.txt")),
+          HashUtils.parsePatterns("  **/*.md , **/*.txt  "));
     }
 
     @Test
     @DisplayName("should skip empty entries from double commas")
     void shouldSkipEmptyEntries() {
-      assertEquals(Set.of("**/*.md", "**/*.txt"), HashUtils.parsePatterns("**/*.md,,**/*.txt"));
+      assertEquals(
+          new java.util.HashSet<>(java.util.Arrays.asList("**/*.md", "**/*.txt")),
+          HashUtils.parsePatterns("**/*.md,,**/*.txt"));
     }
 
     @Test
@@ -215,7 +220,8 @@ class HashUtilsTest {
     void shouldParseMultiLinePatterns() {
       String input = "\n  **/*.md,\n  src/main/**/*.java \n   **/*.xml  ,  **/*.yaml ";
       assertEquals(
-          Set.of("**/*.md", "src/main/**/*.java", "**/*.xml", "**/*.yaml"),
+          new java.util.HashSet<>(
+              java.util.Arrays.asList("**/*.md", "src/main/**/*.java", "**/*.xml", "**/*.yaml")),
           HashUtils.parsePatterns(input));
     }
   }

@@ -23,4 +23,5 @@ This ensures comprehensive supply-chain integrity for AI instructions without re
 * **Cross-OS Native**: Automatically sanitizes Windows/Linux line-endings (`\r\n` -> `\n`) in-memory, ensuring Mac and Windows developers generate identical cryptographic fingerprints.
 * **Zero Pollution**: Uses a centralized ledger inside your `target/` directory instead of littering your source tree with sidecar files.
 * **SIEM Auditable**: Optionally dumps JSON integrity maps (`ai-integrity-report.json`) for effortless Dev-Sec-Ops integration.
+* **Broad Compatibility**: Requires only Maven 3.8+ and JDK 8+, making it accessible to virtually every existing Maven project.
 
