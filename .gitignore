@@ -1,3 +1,11 @@
+# Coding Agents
+.antigravity
+.grok
+.kilo
+.kilocode
+.vscode
+.copilot
+
 # Maven
 target/
 pom.xml.tag

@@ -13,6 +13,7 @@
 - ANY time you modify code to address unexpected behavior or fix a bug, you MUST explicitly log each instance as a detailed bug issue in the GitHub repository. DO NOT make un-logged bug fixes.
 - When implementing new features or fixing bugs, create a feature branch and submit a pull request for review.
 - The project follows semantic versioning (https://semver.org/). When committing features or bug fixes, the version in pom.xml should be updated to reflect this (PATCH for bug fixes, MINOR for backwards-compatible features, MAJOR for breaking changes).
-- All temporary files should be written to the `.tmp` folder in the repository and removed when no longer needed.
+- All temporary files should be written to the `.tmp` folder in the repository and removed when no longer needed. Create the folder if it does not exist
 - When committing features or bug fixes, the CHANGELOG.md must be updated with the changes made in that version.
-
+- All commits must be on a feature branch with a GitHub PR created
+- All commits must be GPG signed
