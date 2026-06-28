@@ -226,8 +226,14 @@ public class ArtifactDigestsCleanMojo extends AbstractMojo {
     int deleted = 0;
     int failed = 0;
 
+    // Guard against null/empty algorithms array
+    if (algorithms == null || algorithms.length == 0) {
+      return new DeleteResult(0, 0);
+    }
+
     FileSystem fs = buildDir.getFileSystem();
-    PathMatcher matcher = fs.getPathMatcher("glob:**/ai-integrity-artifacts-aggregate.sha256");
+    String ext = ArtifactDigestsUtils.extensionForAlgorithm(algorithms[0]);
+    PathMatcher matcher = fs.getPathMatcher("glob:**/ai-integrity-artifacts-aggregate" + ext);
 
     List<Path> aggregateFiles = new ArrayList<>();
     try (DirectoryStream<Path> stream = Files.newDirectoryStream(buildDir, "*")) {

@@ -367,8 +367,11 @@ public class ArtifactDigestsGeneratorMojo extends AbstractMojo {
       centralFilePath = Paths.get(centralDigestFile);
     }
 
-    try {
-      Files.createDirectories(centralFilePath.getParent());
+try {
+      Path parent = centralFilePath.getParent();
+      if (parent != null) {
+        Files.createDirectories(parent);
+      }
 
       // Use synchronized block for thread-safe writes
       synchronized (CENTRAL_LEDGER_LOCK) {
@@ -404,14 +407,18 @@ public class ArtifactDigestsGeneratorMojo extends AbstractMojo {
    * @param log the logger
    */
   private void generateAggregateDigestFile(Path buildDir, Log log) {
-    Path aggregateFile = buildDir.resolve("ai-integrity-artifacts-aggregate.sha256");
+    if (algorithms == null || algorithms.length == 0) {
+      return;
+    }
+    String ext = ArtifactDigestsUtils.extensionForAlgorithm(algorithms[0]);
+    Path aggregateFile = buildDir.resolve("ai-integrity-artifacts-aggregate" + ext);
 
     try {
       List<String> lines = new ArrayList<>();
 
       // Collect all digest lines
       if (hashFileMode == HashFileMode.CENTRAL) {
-        Path centralFilePath = buildDir.resolve("ai-integrity-artifacts.sha256");
+        Path centralFilePath = buildDir.resolve("ai-integrity-artifacts" + ext);
         if (Files.exists(centralFilePath)) {
           List<String> ledgerLines = Files.readAllLines(centralFilePath);
           lines.addAll(ledgerLines);

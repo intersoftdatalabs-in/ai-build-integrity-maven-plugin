@@ -310,18 +310,31 @@ public class ArtifactDigestsVerifyMojo extends AbstractMojo {
       return VerificationResult.FAILED;
     }
 
-    String content = new String(Files.readAllBytes(digestFile), StandardCharsets.UTF_8);
-    String[] parts = content.split("\\s+");
-    if (parts.length < 2) {
+    String content = new String(Files.readAllBytes(digestFile), StandardCharsets.UTF_8).trim();
+
+    // Standard sha256sum format: "<hash>  <filename>" (two spaces delimiter)
+    // Handle filenames that may contain spaces
+    int delimiterPos = content.indexOf("  ");
+    if (delimiterPos < 0) {
       log.error("Invalid digest file format: " + digestFile);
       return VerificationResult.FAILED;
     }
 
-    String storedHash = parts[0];
-    String embeddedFilename = parts[1].trim();
+    String storedHash = content.substring(0, delimiterPos);
+    String embeddedFilename = content.substring(delimiterPos + 2);
 
     // Find the artifact - it should be a sibling of the digest file
     Path artifactPath = digestFile.resolveSibling(embeddedFilename);
+
+    // Validate path to prevent traversal attacks
+    try {
+      Path validatedPath = ArtifactDigestsUtils.validateArtifactPath(artifactPath, buildDir);
+      artifactPath = validatedPath;
+    } catch (ArtifactDigestsUtils.PathTraversalException e) {
+      log.error("Path traversal detected in digest file: " + digestFile);
+      return VerificationResult.FAILED;
+    }
+
     Path relPath = buildDir.relativize(artifactPath);
 
     if (!Files.exists(artifactPath)) {
@@ -417,7 +430,7 @@ public class ArtifactDigestsVerifyMojo extends AbstractMojo {
   }
 
   /**
-   * Creates a JSON audit entry for an artifact.
+   * Creates a JSON audit entry for an artifact with proper escaping.
    *
    * @param artifactPath the artifact path
    * @param status the verification status
@@ -425,9 +438,12 @@ public class ArtifactDigestsVerifyMojo extends AbstractMojo {
    * @return JSON string
    */
   private String createAuditEntry(String artifactPath, String status, String hash) {
+    String escapedPath = escapeJson(artifactPath);
+    String escapedStatus = escapeJson(status);
+    String escapedHash = escapeJson(hash != null ? hash : "");
     return String.format(
         "    {\n      \"artifactPath\": \"%s\",\n      \"status\": \"%s\",\n      \"hash\": \"%s\"\n    }",
-        artifactPath, status, hash != null ? hash : "null");
+        escapedPath, escapedStatus, escapedHash);
   }
 
   /**
