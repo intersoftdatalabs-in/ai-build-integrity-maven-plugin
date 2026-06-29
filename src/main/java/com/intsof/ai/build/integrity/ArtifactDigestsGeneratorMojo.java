@@ -367,7 +367,7 @@ public class ArtifactDigestsGeneratorMojo extends AbstractMojo {
       centralFilePath = Paths.get(centralDigestFile);
     }
 
-try {
+      try {
       Path parent = centralFilePath.getParent();
       if (parent != null) {
         Files.createDirectories(parent);
