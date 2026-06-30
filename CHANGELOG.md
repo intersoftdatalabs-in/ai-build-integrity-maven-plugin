@@ -5,7 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.10.0] - 2026-06-27
+## [0.11.0] - 2026-06-28
+
+### Added
+
+- **Artifact Digests**: New mojos for generating, verifying, and cleaning cryptographic digests for build artifacts (JARs, WARs, ZIPs).
+  - `generate-artifact-digests` - Generates SHA-256/384/512 digests at `package` phase
+  - `verify-artifact-digests` - Verifies artifact integrity at `verify` phase
+  - `clean-artifact-digests` - Removes digest files at `clean` phase
+  - Streaming-only hash computation (never loads full files into memory)
+  - Path traversal protection via canonical path validation
+  - Support for `CENTRAL` and `SIDECAR` storage modes
+  - Optional aggregate digest for quick nightly verification
+  - Warnings for compromised algorithms (MD5, SHA-1)
+
+### Changed
+
+- **Build Tooling**: Spotless Maven plugin now requires Java 11+; use Java 21 for builds while maintaining Java 8 target compatibility.
 
 ### Added
 
