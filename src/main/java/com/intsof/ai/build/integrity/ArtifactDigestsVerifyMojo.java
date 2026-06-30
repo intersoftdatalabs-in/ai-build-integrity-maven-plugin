@@ -464,7 +464,10 @@ public class ArtifactDigestsVerifyMojo extends AbstractMojo {
             : buildDir.resolve("ai-integrity-artifacts-report.json");
 
     try {
-      Files.createDirectories(reportFile.getParent());
+      Path parentDir = reportFile.getParent();
+      if (parentDir != null) {
+        Files.createDirectories(parentDir);
+      }
 
       StringBuilder report = new StringBuilder();
       report.append("{\n");
@@ -486,7 +489,7 @@ public class ArtifactDigestsVerifyMojo extends AbstractMojo {
       report.append("    \"totalArtifacts\": ").append(verified + failed + missing).append(",\n");
       report.append("    \"verified\": ").append(verified).append(",\n");
       report.append("    \"failed\": ").append(failed).append(",\n");
-      report.append("    \"skipped\": ").append(missing).append("\n");
+      report.append("    \"missing\": ").append(missing).append("\n");
       report.append("  },\n");
       report.append("  \"artifacts\": [\n");
       report.append(String.join(",\n", entries));

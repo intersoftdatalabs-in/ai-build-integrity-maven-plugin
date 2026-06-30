@@ -146,8 +146,13 @@ public final class ArtifactDigestsUtils {
     // Check if the resolved path is within the build directory
     Path canonicalBuildDir = buildDirectory.toRealPath(java.nio.file.LinkOption.NOFOLLOW_LINKS);
 
-    // The real path must start with the build directory
-    if (!realPath.startsWith(canonicalBuildDir)) {
+    // The real path must be inside the build directory
+    // Check for exact match or proper subdirectory (with separator to prevent sibling bypass)
+    String canonicalBuildDirStr = canonicalBuildDir.toString();
+    boolean isInsideBuildDir =
+        realPath.equals(canonicalBuildDir)
+            || realPath.toString().startsWith(canonicalBuildDirStr + "/");
+    if (!isInsideBuildDir) {
       throw new PathTraversalException(
           "Artifact path escapes build directory: "
               + artifactPath
@@ -168,7 +173,10 @@ public final class ArtifactDigestsUtils {
         } catch (IOException e) {
           throw new PathTraversalException("Cannot resolve symlink target: " + linkTarget, e);
         }
-        if (!resolvedLinkTarget.startsWith(canonicalBuildDir)) {
+        boolean linkTargetInside =
+            resolvedLinkTarget.equals(canonicalBuildDir)
+                || resolvedLinkTarget.toString().startsWith(canonicalBuildDirStr + "/");
+        if (!linkTargetInside) {
           throw new PathTraversalException(
               "Symlink target escapes build directory: "
                   + linkTarget
@@ -190,7 +198,10 @@ public final class ArtifactDigestsUtils {
             throw new PathTraversalException(
                 "Cannot resolve relative symlink target: " + resolvedRelative, e);
           }
-          if (!realResolvedRelative.startsWith(canonicalBuildDir)) {
+          boolean relativeTargetInside =
+              realResolvedRelative.equals(canonicalBuildDir)
+                  || realResolvedRelative.toString().startsWith(canonicalBuildDirStr + "/");
+          if (!relativeTargetInside) {
             throw new PathTraversalException(
                 "Relative symlink target escapes build directory: "
                     + linkTarget
