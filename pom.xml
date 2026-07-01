@@ -18,7 +18,7 @@
 
     <groupId>com.intsof</groupId>
     <artifactId>ai-build-integrity-maven-plugin</artifactId>
-    <version>0.11.0-SNAPSHOT</version>
+    <version>0.11.1-SNAPSHOT</version>
     <packaging>maven-plugin</packaging>
 
     <name>AI Build Integrity Maven Plugin</name>

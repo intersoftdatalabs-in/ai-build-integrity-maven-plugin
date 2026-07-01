@@ -147,11 +147,9 @@ public final class ArtifactDigestsUtils {
     Path canonicalBuildDir = buildDirectory.toRealPath(java.nio.file.LinkOption.NOFOLLOW_LINKS);
 
     // The real path must be inside the build directory
-    // Check for exact match or proper subdirectory (with separator to prevent sibling bypass)
-    String canonicalBuildDirStr = canonicalBuildDir.toString();
+    // Use Path.startsWith for proper cross-platform path comparison
     boolean isInsideBuildDir =
-        realPath.equals(canonicalBuildDir)
-            || realPath.toString().startsWith(canonicalBuildDirStr + "/");
+        realPath.equals(canonicalBuildDir) || realPath.startsWith(canonicalBuildDir);
     if (!isInsideBuildDir) {
       throw new PathTraversalException(
           "Artifact path escapes build directory: "
@@ -175,7 +173,7 @@ public final class ArtifactDigestsUtils {
         }
         boolean linkTargetInside =
             resolvedLinkTarget.equals(canonicalBuildDir)
-                || resolvedLinkTarget.toString().startsWith(canonicalBuildDirStr + "/");
+                || resolvedLinkTarget.startsWith(canonicalBuildDir);
         if (!linkTargetInside) {
           throw new PathTraversalException(
               "Symlink target escapes build directory: "
@@ -200,7 +198,7 @@ public final class ArtifactDigestsUtils {
           }
           boolean relativeTargetInside =
               realResolvedRelative.equals(canonicalBuildDir)
-                  || realResolvedRelative.toString().startsWith(canonicalBuildDirStr + "/");
+                  || realResolvedRelative.startsWith(canonicalBuildDir);
           if (!relativeTargetInside) {
             throw new PathTraversalException(
                 "Relative symlink target escapes build directory: "
