@@ -1,3 +1,4 @@
+
 # Coding Agents
 .antigravity
 .grok
@@ -7,6 +8,7 @@
 .copilot
 
 # Maven
+.mvn
 target/
 pom.xml.tag
 pom.xml.releaseBackup
