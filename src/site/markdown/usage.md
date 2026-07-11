@@ -14,7 +14,7 @@ For a standard Maven application, attaching the plugin is incredibly simple. It 
         <plugin>
             <groupId>com.intsof</groupId>
             <artifactId>ai-build-integrity-maven-plugin</artifactId>
-            <version>0.10.0</version>
+            <version>0.12.0</version>
             <configuration>
                 <hashFileMode>CENTRAL</hashFileMode>
                 <!-- Define your hashing intensity -->
@@ -66,6 +66,12 @@ The correct architecture is therefore:
 | `verify-hashes`   | **Every module**                     | `TEST` — re-verifies the sealed ledger just before each module is packaged |
 | `clean-hashes`    | Root only (`executionRootOnly=true`) | `CLEAN` — removes the ledger once                                          |
 
+**Partial reactors (`-pl`, child-module builds):** With the default `reactorScope=AUTO`,
+`generate-hashes` only walks the modules in the current Maven reactor (seal roots) and **merges**
+those paths into the existing central ledger. A full reactor build still walks the entire
+`baseDir` and rewrites the ledger. Force a full re-seal anytime with
+`-Dai.integrity.reactorScope=FULL`.
+
 Because `verify-hashes` must read the ledger from every child module, you must use `centralHashFile`
 to point all modules at the single shared ledger written by the root. Without it, each child module
 looks in its own `target/` directory, finds nothing, and silently skips.
@@ -79,7 +85,7 @@ Add the following to your **root parent POM's** `<build><pluginManagement>` and 
             <plugin>
                 <groupId>com.intsof</groupId>
                 <artifactId>ai-build-integrity-maven-plugin</artifactId>
-                <version>0.10.0</version>
+                <version>0.12.0</version>
                 <configuration>
                     <hashFileMode>CENTRAL</hashFileMode>
                     <!-- Scan the entire repo from the root, not from each module's basedir -->
@@ -214,7 +220,7 @@ Generate cryptographic digests for your build artifacts to ensure supply-chain i
         <plugin>
             <groupId>com.intsof</groupId>
             <artifactId>ai-build-integrity-maven-plugin</artifactId>
-            <version>0.10.0</version>
+            <version>0.12.0</version>
             <executions>
                 <execution>
                     <id>generate-artifacts</id>

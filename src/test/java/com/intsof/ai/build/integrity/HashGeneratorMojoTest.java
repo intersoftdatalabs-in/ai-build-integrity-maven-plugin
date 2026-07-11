@@ -22,8 +22,11 @@ import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.Collections;
 import org.apache.maven.execution.MavenExecutionRequest;
 import org.apache.maven.execution.MavenSession;
+import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.project.MavenProject;
 import org.junit.jupiter.api.BeforeEach;
@@ -34,8 +37,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 @DisplayName("HashGeneratorMojo")
 class HashGeneratorMojoTest {
 
@@ -59,6 +65,7 @@ class HashGeneratorMojoTest {
     setField(mojo, "outputExtension", "auto");
     setField(mojo, "skipExisting", false);
     setField(mojo, "skipDirs", "target,.git,node_modules,.tmp");
+    setField(mojo, "reactorScope", "AUTO");
   }
 
   @Nested
@@ -456,6 +463,129 @@ class HashGeneratorMojoTest {
           "ignored .md file should not be hashed");
       assertTrue(
           Files.exists(tempDir.resolve("forced.txt.sha256")), "forced .txt file should be hashed");
+    }
+  }
+
+  @Nested
+  @DisplayName("Reactor Scope Tests")
+  class ReactorScopeTests {
+
+    @Test
+    @DisplayName("partial reactor only hashes seal-root modules and merges CENTRAL ledger")
+    void partialReactorMergesCentralLedger() throws Exception {
+      Path moduleA = tempDir.resolve("module-a");
+      Path moduleB = tempDir.resolve("module-b");
+      Files.createDirectories(moduleA);
+      Files.createDirectories(moduleB);
+      Files.write(moduleA.resolve("AGENTS.md"), "a".getBytes(StandardCharsets.UTF_8));
+      Files.write(moduleB.resolve("AGENTS.md"), "b".getBytes(StandardCharsets.UTF_8));
+
+      Path central = tempDir.resolve("ai-integrity.sha256");
+      // Simulate a prior full seal
+      String priorHashA = HashUtils.computeHash(moduleA.resolve("AGENTS.md"), "SHA-256", false);
+      String priorHashB = HashUtils.computeHash(moduleB.resolve("AGENTS.md"), "SHA-256", false);
+      Files.write(
+          central,
+          (priorHashA + "  module-a/AGENTS.md\n" + priorHashB + "  module-b/AGENTS.md\n")
+              .getBytes(StandardCharsets.UTF_8));
+
+      // Change only module-b content so a rehash is observable
+      Files.write(moduleB.resolve("AGENTS.md"), "b-changed".getBytes(StandardCharsets.UTF_8));
+      String newHashB = HashUtils.computeHash(moduleB.resolve("AGENTS.md"), "SHA-256", false);
+
+      MavenProject projB = mock(MavenProject.class);
+      when(projB.getBasedir()).thenReturn(moduleB.toFile());
+      MavenProject projA = mock(MavenProject.class);
+      when(projA.getBasedir()).thenReturn(moduleA.toFile());
+      when(session.getProjects()).thenReturn(Collections.singletonList(projB));
+      when(session.getAllProjects()).thenReturn(Arrays.asList(projA, projB));
+
+      setField(mojo, "hashFileMode", HashFileMode.CENTRAL);
+      setField(mojo, "centralHashFile", central.toString());
+      setField(mojo, "reactorScope", "AUTO");
+      setField(mojo, "hideHashFiles", false);
+
+      mojo.execute();
+
+      String content = new String(Files.readAllBytes(central), StandardCharsets.UTF_8);
+      assertTrue(content.contains(priorHashA + "  module-a/AGENTS.md"), "module-a preserved");
+      assertTrue(content.contains(newHashB + "  module-b/AGENTS.md"), "module-b refreshed");
+      assertFalse(content.contains(priorHashB + "  module-b/AGENTS.md"), "old module-b removed");
+      assertFalse(Files.exists(moduleA.resolve("AGENTS.md.sha256")), "should not create sidecars");
+    }
+
+    @Test
+    @DisplayName("reactorScope=FULL forces full-tree overwrite on partial reactor")
+    void fullScopeForcesFullTree() throws Exception {
+      Path moduleA = tempDir.resolve("module-a");
+      Path moduleB = tempDir.resolve("module-b");
+      Files.createDirectories(moduleA);
+      Files.createDirectories(moduleB);
+      Files.write(moduleA.resolve("AGENTS.md"), "a".getBytes(StandardCharsets.UTF_8));
+      Files.write(moduleB.resolve("AGENTS.md"), "b".getBytes(StandardCharsets.UTF_8));
+
+      Path central = tempDir.resolve("ai-integrity.sha256");
+      Files.write(central, "stale  module-a/AGENTS.md\n".getBytes(StandardCharsets.UTF_8));
+
+      MavenProject projB = mock(MavenProject.class);
+      when(projB.getBasedir()).thenReturn(moduleB.toFile());
+      MavenProject projA = mock(MavenProject.class);
+      when(projA.getBasedir()).thenReturn(moduleA.toFile());
+      when(session.getProjects()).thenReturn(Collections.singletonList(projB));
+      when(session.getAllProjects()).thenReturn(Arrays.asList(projA, projB));
+
+      setField(mojo, "hashFileMode", HashFileMode.CENTRAL);
+      setField(mojo, "centralHashFile", central.toString());
+      setField(mojo, "reactorScope", "FULL");
+
+      mojo.execute();
+
+      String content = new String(Files.readAllBytes(central), StandardCharsets.UTF_8);
+      assertTrue(content.contains("module-a/AGENTS.md"));
+      assertTrue(content.contains("module-b/AGENTS.md"));
+      assertFalse(content.contains("stale  "));
+    }
+
+    @Test
+    @DisplayName("SIDECAR partial only writes sidecars under seal roots")
+    void sidecarPartialOnlySealRoots() throws Exception {
+      Path moduleA = tempDir.resolve("module-a");
+      Path moduleB = tempDir.resolve("module-b");
+      Files.createDirectories(moduleA);
+      Files.createDirectories(moduleB);
+      Files.write(moduleA.resolve("AGENTS.md"), "a".getBytes(StandardCharsets.UTF_8));
+      Files.write(moduleB.resolve("AGENTS.md"), "b".getBytes(StandardCharsets.UTF_8));
+      // Pre-existing sidecar outside seal root must remain untouched
+      Files.write(
+          moduleA.resolve("AGENTS.md.sha256"),
+          "oldhash  AGENTS.md\n".getBytes(StandardCharsets.UTF_8));
+
+      MavenProject projB = mock(MavenProject.class);
+      when(projB.getBasedir()).thenReturn(moduleB.toFile());
+      MavenProject projA = mock(MavenProject.class);
+      when(projA.getBasedir()).thenReturn(moduleA.toFile());
+      when(session.getProjects()).thenReturn(Collections.singletonList(projB));
+      when(session.getAllProjects()).thenReturn(Arrays.asList(projA, projB));
+
+      setField(mojo, "hashFileMode", HashFileMode.SIDECAR);
+      setField(mojo, "hideHashFiles", false);
+      setField(mojo, "reactorScope", "AUTO");
+
+      mojo.execute();
+
+      assertTrue(Files.exists(moduleB.resolve("AGENTS.md.sha256")));
+      String aSidecar =
+          new String(
+              Files.readAllBytes(moduleA.resolve("AGENTS.md.sha256")), StandardCharsets.UTF_8);
+      assertEquals("oldhash  AGENTS.md\n", aSidecar);
+    }
+
+    @Test
+    @DisplayName("invalid reactorScope fails the build")
+    void invalidReactorScopeFails() throws Exception {
+      setField(mojo, "reactorScope", "SOMETIMES");
+      Files.write(tempDir.resolve("AGENTS.md"), "x".getBytes(StandardCharsets.UTF_8));
+      assertThrows(MojoExecutionException.class, () -> mojo.execute());
     }
   }
 

@@ -49,4 +49,4 @@ The `verify-hashes` goal executed, but it couldn't find the `target/ai-integrity
 
 **How to fix it:**
 1. Did you forget to run `generate-hashes`? If building locally skipping the `initialize` phase, you may just need to generate the initial hashes.
-2. Are you using `-pl` to target a child module from the root directory? If the parent module never executed `generate-hashes`, the child module won't find the global ledger. This is expected local development behavior.
+2. Are you using `-pl` to target a child module from the root directory? If no central ledger exists yet, a partial reactor only seals the selected modules (default `reactorScope=AUTO`). Run a full reactor build once, or force a full seal with `-Dai.integrity.reactorScope=FULL`, so the shared ledger covers the whole tree. If the parent never ran `generate-hashes` at all, verify will warn that the ledger is missing.
