@@ -26,7 +26,9 @@ import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.AbstractMojo;
@@ -156,6 +158,16 @@ public class HashGeneratorMojo extends AbstractMojo {
   @Parameter(property = "ai.integrity.centralHashFile")
   private String centralHashFile;
 
+  /**
+   * Controls whether hash generation walks the full configured {@code baseDir} or only modules in
+   * the current Maven reactor. {@code AUTO} (default) uses a full-tree seal for full reactor builds
+   * and seal-root walks for partial builds ({@code -pl}, child-module builds). {@code FULL} always
+   * walks {@code baseDir}. {@code REACTOR} always walks seal roots from {@code
+   * session.getProjects()}.
+   */
+  @Parameter(property = "ai.integrity.reactorScope", defaultValue = "AUTO")
+  private String reactorScope;
+
   @Override
   public void execute() throws MojoExecutionException {
     if (skip || skipAlt) {
@@ -188,15 +200,51 @@ public class HashGeneratorMojo extends AbstractMojo {
       getLog().info("Resume mode: regenerating hashes for " + resumeFromModule);
     }
 
+    final ReactorSealScope.Mode scopeMode;
+    try {
+      scopeMode = ReactorSealScope.parseMode(reactorScope);
+    } catch (IllegalArgumentException e) {
+      throw new MojoExecutionException(e.getMessage(), e);
+    }
+
     String algorithm = HashUtils.resolveAlgorithm(algorithmBits);
     String ext = resolveExtension();
 
-    Path basePath = resolveBasePath();
+    Path basePath = resolveBasePath().toAbsolutePath().normalize();
     getLog().info("Generating " + algorithm + " hashes for AI resources in: " + basePath);
 
     if (!Files.exists(basePath)) {
       getLog().warn("Base directory does not exist: " + basePath);
       return;
+    }
+
+    boolean partial = ReactorSealScope.isPartialReactor(session, basePath);
+    boolean mergeCentral = ReactorSealScope.shouldMergeCentral(scopeMode, partial);
+    List<Path> walkRoots = ReactorSealScope.resolveWalkRoots(basePath, session, scopeMode, partial);
+    List<Path> sealRootsForMerge =
+        mergeCentral ? ReactorSealScope.computeSealRoots(session, basePath) : walkRoots;
+
+    if (mergeCentral) {
+      int selected =
+          session != null && session.getProjects() != null ? session.getProjects().size() : 0;
+      int all =
+          session != null && session.getAllProjects() != null
+              ? session.getAllProjects().size()
+              : selected;
+      String label =
+          partial || scopeMode == ReactorSealScope.Mode.AUTO
+              ? "Partial reactor detected"
+              : "Reactor-scoped sealing";
+      getLog()
+          .info(
+              label
+                  + " ("
+                  + selected
+                  + " of "
+                  + all
+                  + " projects); walking "
+                  + walkRoots.size()
+                  + " seal root(s).");
     }
 
     Set<String> skipSet = parseSkipDirs();
@@ -208,40 +256,46 @@ public class HashGeneratorMojo extends AbstractMojo {
     List<Path> filesToHash = new ArrayList<>();
     final long[] scanned = {0};
     long walkStart = System.currentTimeMillis();
-    try {
-      Files.walkFileTree(
-          basePath,
-          new GitIgnoreAwareFileVisitor(
-              basePath, gitignoreAutoExclude, skipSet, forceIncludeMatchers, getLog()) {
-            @Override
-            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
-              scanned[0]++;
-              if (scanned[0] % 1000 == 0) {
-                getLog()
-                    .info(
-                        "  ... scanned "
-                            + scanned[0]
-                            + " files, "
-                            + filesToHash.size()
-                            + " matched so far");
-              }
-              Path rel = basePath.relativize(file);
-              boolean gitIgnored = isIgnoredByGit(file);
+    for (Path walkRoot : walkRoots) {
+      if (!Files.exists(walkRoot)) {
+        getLog().warn("Seal root does not exist, skipping: " + walkRoot);
+        continue;
+      }
+      try {
+        Files.walkFileTree(
+            walkRoot,
+            new GitIgnoreAwareFileVisitor(
+                basePath, gitignoreAutoExclude, skipSet, forceIncludeMatchers, getLog()) {
+              @Override
+              public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
+                scanned[0]++;
+                if (scanned[0] % 1000 == 0) {
+                  getLog()
+                      .info(
+                          "  ... scanned "
+                              + scanned[0]
+                              + " files, "
+                              + filesToHash.size()
+                              + " matched so far");
+                }
+                Path rel = basePath.relativize(file.toAbsolutePath().normalize());
+                boolean gitIgnored = isIgnoredByGit(file);
 
-              if (gitIgnored && !matchesAny(rel, forceIncludeMatchers)) {
+                if (gitIgnored && !matchesAny(rel, forceIncludeMatchers)) {
+                  return FileVisitResult.CONTINUE;
+                }
+                if (matchesAny(rel, excludeMatchers)) {
+                  return FileVisitResult.CONTINUE;
+                }
+                if (matchesAny(rel, includeMatchers) || matchesAny(rel, forceIncludeMatchers)) {
+                  filesToHash.add(file);
+                }
                 return FileVisitResult.CONTINUE;
               }
-              if (matchesAny(rel, excludeMatchers)) {
-                return FileVisitResult.CONTINUE;
-              }
-              if (matchesAny(rel, includeMatchers) || matchesAny(rel, forceIncludeMatchers)) {
-                filesToHash.add(file);
-              }
-              return FileVisitResult.CONTINUE;
-            }
-          });
-    } catch (IOException e) {
-      throw new MojoExecutionException("Error walking directory: " + basePath, e);
+            });
+      } catch (IOException e) {
+        throw new MojoExecutionException("Error walking directory: " + walkRoot, e);
+      }
     }
     long walkMs = System.currentTimeMillis() - walkStart;
     getLog()
@@ -254,12 +308,16 @@ public class HashGeneratorMojo extends AbstractMojo {
                 + walkMs
                 + " ms");
 
-    if (filesToHash.isEmpty()) {
+    if (filesToHash.isEmpty() && !mergeCentral) {
       getLog().info("No files found to hash.");
       return;
     }
 
-    getLog().info("Found " + filesToHash.size() + " files to hash.");
+    if (!filesToHash.isEmpty()) {
+      getLog().info("Found " + filesToHash.size() + " files to hash.");
+    } else {
+      getLog().info("No files found to hash under seal roots; refreshing central ledger scope.");
+    }
 
     int hashed = 0;
     int skipped = 0;
@@ -272,25 +330,50 @@ public class HashGeneratorMojo extends AbstractMojo {
               : Paths.get(buildDirectory, "ai-integrity" + ext);
       try {
         Files.createDirectories(centralFilePath.getParent());
-        StringBuilder sb = new StringBuilder();
+        Map<String, String> newEntries = new LinkedHashMap<>();
         for (Path file : filesToHash) {
           try {
             String hash = HashUtils.computeHash(file, algorithm, normalizeLineEndings);
-            // Use stable relative paths for the central ledger
-            String relPath = basePath.relativize(file).toString().replace('\\', '/');
-            sb.append(hash).append("  ").append(relPath).append("\n");
+            String relPath =
+                basePath
+                    .relativize(file.toAbsolutePath().normalize())
+                    .toString()
+                    .replace('\\', '/');
+            newEntries.put(relPath, hash);
             hashed++;
           } catch (Exception e) {
             getLog().error("Failed to hash " + file + ": " + e.getMessage());
           }
         }
-        Files.write(centralFilePath, sb.toString().getBytes(StandardCharsets.UTF_8));
-        getLog().info("Central hash file written: " + centralFilePath);
+
+        final String ledgerContent;
+        if (mergeCentral) {
+          List<Path> roots = sealRootsForMerge.isEmpty() ? walkRoots : sealRootsForMerge;
+          String existing = "";
+          if (Files.exists(centralFilePath)) {
+            existing = new String(Files.readAllBytes(centralFilePath), StandardCharsets.UTF_8);
+          }
+          ledgerContent =
+              ReactorSealScope.mergeCentralLedger(existing, basePath, roots, newEntries);
+          getLog().info("Central hash file merged (partial seal): " + centralFilePath);
+        } else {
+          StringBuilder sb = new StringBuilder();
+          for (Map.Entry<String, String> e : newEntries.entrySet()) {
+            sb.append(e.getValue()).append("  ").append(e.getKey()).append('\n');
+          }
+          ledgerContent = sb.toString();
+          getLog().info("Central hash file written: " + centralFilePath);
+        }
+        Files.write(centralFilePath, ledgerContent.getBytes(StandardCharsets.UTF_8));
       } catch (IOException e) {
         throw new MojoExecutionException(
             "Failed to write central hash file: " + centralFilePath, e);
       }
     } else {
+      if (filesToHash.isEmpty()) {
+        getLog().info("No files found to hash.");
+        return;
+      }
       for (Path file : filesToHash) {
         String name = file.getFileName().toString();
         String prefix = (hideHashFiles && !name.startsWith(".")) ? "." : "";

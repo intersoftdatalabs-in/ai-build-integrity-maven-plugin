@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.12.0] - 2026-07-10
+
+### Added
+
+- **Reactor-scoped hash generation**: On partial multi-module builds (`-pl`, child-module builds against a multi-module `baseDir`), `generate-hashes` walks only the selected module seal roots instead of rehashing the entire reactor tree. Full reactor builds still seal the full configured `baseDir`.
+- **`ai.integrity.reactorScope`**: `AUTO` (default), `FULL`, or `REACTOR` to control full-tree vs reactor-scoped sealing.
+- **CENTRAL ledger merge on partial seals**: Existing out-of-scope ledger entries are preserved; only paths under seal roots are refreshed.
+- Design mini-spec: `docs/superpowers/specs/2026-07-10-reactor-scoped-hash-generation-design.md`.
+
 ## [0.11.1] - 2026-07-01
 
 ### Fixed
@@ -60,6 +69,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - .gitignore awareness and automatic directory pruning.
 - Machine-readable JSON audit reports for SIEM integration.
 
-[0.10.0]: https://github.com/intersoftdatalabs-in/ai-build-integrity-maven-plugin/compare/v0.9.0...HEAD
+[0.12.0]: https://github.com/intersoftdatalabs-in/ai-build-integrity-maven-plugin/compare/v0.11.1...HEAD
+[0.11.1]: https://github.com/intersoftdatalabs-in/ai-build-integrity-maven-plugin/compare/v0.11.0...v0.11.1
+[0.11.0]: https://github.com/intersoftdatalabs-in/ai-build-integrity-maven-plugin/compare/v0.10.0...v0.11.0
+[0.10.0]: https://github.com/intersoftdatalabs-in/ai-build-integrity-maven-plugin/compare/v0.9.0...v0.10.0
 [0.9.0]: https://github.com/intersoftdatalabs-in/ai-build-integrity-maven-plugin/releases/tag/v0.9.0
 

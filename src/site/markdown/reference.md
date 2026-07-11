@@ -6,19 +6,20 @@ This document provides technical reference for the inputs (configuration) and ou
 
 All configuration parameters can be passed via the `<configuration>` block in your `pom.xml` or via System Properties (using the `-D` flag).
 
-|       Parameter        |   Type    |             Default             |                                  Description                                  |
-|------------------------|-----------|---------------------------------|-------------------------------------------------------------------------------|
-| `algorithmBits`        | `int`     | `256`                           | Strength of the cryptographic digest: `256`, `384`, or `512`.                 |
-| `hashFileMode`         | `enum`    | `SIDECAR`                       | `CENTRAL` for a single ledger, or `SIDECAR` for hidden files next to sources. |
-| `baseDir`              | `String`  | `${project.basedir}`            | Root directory to scan for files.                                             |
-| `includes`             | `String`  | `**/*.md`                       | Comma-separated list of glob patterns to include.                             |
-| `excludes`             | `String`  | (various)                       | Comma-separated list of glob patterns to exclude.                             |
-| `skipDirs`             | `String`  | `target,.git,node_modules,.tmp` | Directories to prune entirely from traversal.                                 |
-| `normalizeLineEndings` | `boolean` | `false`                         | If `true`, normalizes CRLF to LF in-memory before hashing.                    |
-| `failOnError`          | `boolean` | `true`                          | (Verify only) If `false`, build continues on validation failure.              |
-| `generateAuditReport`  | `boolean` | `true`                          | (Verify only) Generates the machine-readable JSON report.                     |
-| `executionRootOnly`    | `boolean` | `false`                         | If `true`, only executes on the root module of a build.                       |
-| `skip`                 | `boolean` | `false`                         | Bypasses all plugin logic.                                                    |
+|       Parameter        |   Type    |             Default             |                                                                                          Description                                                                                          |
+|------------------------|-----------|---------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `algorithmBits`        | `int`     | `256`                           | Strength of the cryptographic digest: `256`, `384`, or `512`.                                                                                                                                 |
+| `hashFileMode`         | `enum`    | `SIDECAR`                       | `CENTRAL` for a single ledger, or `SIDECAR` for hidden files next to sources.                                                                                                                 |
+| `baseDir`              | `String`  | `${project.basedir}`            | Root directory to scan for files.                                                                                                                                                             |
+| `includes`             | `String`  | `**/*.md`                       | Comma-separated list of glob patterns to include.                                                                                                                                             |
+| `excludes`             | `String`  | (various)                       | Comma-separated list of glob patterns to exclude.                                                                                                                                             |
+| `skipDirs`             | `String`  | `target,.git,node_modules,.tmp` | Directories to prune entirely from traversal.                                                                                                                                                 |
+| `normalizeLineEndings` | `boolean` | `false`                         | If `true`, normalizes CRLF to LF in-memory before hashing.                                                                                                                                    |
+| `failOnError`          | `boolean` | `true`                          | (Verify only) If `false`, build continues on validation failure.                                                                                                                              |
+| `generateAuditReport`  | `boolean` | `true`                          | (Verify only) Generates the machine-readable JSON report.                                                                                                                                     |
+| `executionRootOnly`    | `boolean` | `false`                         | If `true`, only executes on the root module of a build.                                                                                                                                       |
+| `reactorScope`         | `String`  | `AUTO`                          | (`generate-hashes`) `AUTO` seals full tree on full reactors and selected modules on partial builds; `FULL` always walks `baseDir`; `REACTOR` always uses seal roots from the current reactor. |
+| `skip`                 | `boolean` | `false`                         | Bypasses all plugin logic.                                                                                                                                                                    |
 
 ---
 

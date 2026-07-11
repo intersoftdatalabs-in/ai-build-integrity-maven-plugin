@@ -58,7 +58,7 @@ The plugin is available on Maven Central as of version 0.9.0.
 <plugin>
     <groupId>com.intsof</groupId>
     <artifactId>ai-build-integrity-maven-plugin</artifactId>
-    <version>0.11.1</version>
+    <version>0.12.0</version>
     <configuration>
         <!-- Centralized ledger: no sidecar files in your source tree -->
         <hashFileMode>CENTRAL</hashFileMode>
@@ -86,11 +86,12 @@ The plugin is available on Maven Central as of version 0.9.0.
 Maven has no lifecycle event that fires once when the entire reactor finishes. To catch mid-build
 tampering you must verify in **every module**. The correct architecture is:
 
-- `generate-hashes` — seals all files once at `VALIDATE` on the **root only**
+- `generate-hashes` — seals files at `VALIDATE` on the **root only** (full tree on full reactors; selected modules only on `-pl` / partial reactors, with CENTRAL ledger merge)
 - `verify-hashes` — re-verifies in **every module** at `TEST` before packaging
 - `clean-hashes` — deletes the ledger once on the **root only**
 
 `centralHashFile` is required to point all child modules at the single shared ledger the root writes.
+Use `-Dai.integrity.reactorScope=FULL` when you need a forced full-tree re-seal during a partial build.
 
 ```xml
 <build>
@@ -99,7 +100,7 @@ tampering you must verify in **every module**. The correct architecture is:
             <plugin>
                 <groupId>com.intsof</groupId>
                 <artifactId>ai-build-integrity-maven-plugin</artifactId>
-                <version>0.11.1</version>
+                <version>0.12.0</version>
                 <configuration>
                     <hashFileMode>CENTRAL</hashFileMode>
                     <!-- Scan the entire repo, not just the current module's basedir -->
