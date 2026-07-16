@@ -44,11 +44,11 @@ mvn clean
 
 ### Resume with `-rf` fails hash verification after I fixed a module
 
-**Why it happened (pre-0.12.1):**
+**Why it happened (pre-0.13.1):**
 On multi-module builds, `generate-hashes` often runs only on the reactor root (`executionRootOnly`). When you resume with `mvn -rf :module-name`, the root is usually not in the reactor, so hashes were not refreshed for intentional fixes and `verify-hashes` failed.
 
 **How to fix it:**
-From **0.12.1** onward, plain `-rf` automatically re-seals the resumed reactor (first resumed module regenerates and merges the CENTRAL ledger) before verification. No extra `-Dai.integrity.resumeFromModule` flag is required.
+From **0.13.1** onward, plain `-rf` automatically re-seals the resumed reactor (first resumed module regenerates and merges the CENTRAL ledger) before verification. No extra `-Dai.integrity.resumeFromModule` flag is required.
 
 ```bash
 mvn -rf :module-name install
