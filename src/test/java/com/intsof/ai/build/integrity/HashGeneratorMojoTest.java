@@ -319,7 +319,9 @@ class HashGeneratorMojoTest {
       when(mockRequest.getResumeFrom()).thenReturn(":module-b");
 
       when(project.getArtifactId()).thenReturn("module-a");
+      when(project.getGroupId()).thenReturn("com.example");
       setField(mojo, "resumeFromModule", "module-b");
+      setField(mojo, "executionRootOnly", true);
       Files.write(tempDir.resolve("AGENTS.md"), "content".getBytes(StandardCharsets.UTF_8));
 
       mojo.execute();
@@ -336,12 +338,36 @@ class HashGeneratorMojoTest {
       when(mockRequest.getResumeFrom()).thenReturn(":module-a");
 
       when(project.getArtifactId()).thenReturn("module-a");
+      when(project.getGroupId()).thenReturn("com.example");
+      when(project.isExecutionRoot()).thenReturn(false);
+      when(session.getProjects()).thenReturn(Collections.singletonList(project));
       setField(mojo, "resumeFromModule", "module-a");
+      setField(mojo, "executionRootOnly", true);
       Files.write(tempDir.resolve("AGENTS.md"), "content".getBytes(StandardCharsets.UTF_8));
 
       mojo.execute();
 
       verify(log).info(contains("Resume mode: regenerating hashes for module-a"));
+      assertTrue(Files.exists(tempDir.resolve("AGENTS.md.sha256")));
+    }
+
+    @Test
+    @DisplayName("should auto-regenerate on plain -rf without resumeFromModule")
+    void shouldAutoRegenerateOnPlainRf() throws Exception {
+      MavenExecutionRequest mockRequest = mock(MavenExecutionRequest.class);
+      when(session.getRequest()).thenReturn(mockRequest);
+      when(mockRequest.getResumeFrom()).thenReturn(":module-a");
+
+      when(project.getArtifactId()).thenReturn("module-a");
+      when(project.getGroupId()).thenReturn("com.example");
+      when(project.isExecutionRoot()).thenReturn(false);
+      when(session.getProjects()).thenReturn(Collections.singletonList(project));
+      setField(mojo, "executionRootOnly", true);
+      Files.write(tempDir.resolve("AGENTS.md"), "content".getBytes(StandardCharsets.UTF_8));
+
+      mojo.execute();
+
+      verify(log).info(contains("Resume mode: regenerating hashes"));
       assertTrue(Files.exists(tempDir.resolve("AGENTS.md.sha256")));
     }
   }

@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.13.1] - 2026-07-16
+
+### Fixed
+
+- **`-rf` resume hash verification**: Plain `mvn -rf :module …` now automatically re-seals the resumed reactor before verification. The first module in the resumed reactor regenerates hashes even when `executionRootOnly=true` (root not in reactor), merges CENTRAL ledger entries for remaining modules, and verify runs against the refreshed seals instead of failing on intentional fixes. Supports `:artifactId`, `groupId:artifactId`, and bare artifactId selectors; optional `ai.integrity.resumeFromModule` remains as an override (#43).
+
 ## [0.13.0] - 2026-07-16
 
 ### Added
@@ -75,7 +81,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - .gitignore awareness and automatic directory pruning.
 - Machine-readable JSON audit reports for SIEM integration.
 
-[0.13.0]: https://github.com/intersoftdatalabs-in/ai-build-integrity-maven-plugin/compare/v0.12.0...HEAD
+[0.13.1]: https://github.com/intersoftdatalabs-in/ai-build-integrity-maven-plugin/compare/v0.13.0...HEAD
+[0.13.0]: https://github.com/intersoftdatalabs-in/ai-build-integrity-maven-plugin/compare/v0.12.0...v0.13.0
 [0.12.0]: https://github.com/intersoftdatalabs-in/ai-build-integrity-maven-plugin/compare/v0.11.1...v0.12.0
 [0.11.1]: https://github.com/intersoftdatalabs-in/ai-build-integrity-maven-plugin/compare/v0.11.0...v0.11.1
 [0.11.0]: https://github.com/intersoftdatalabs-in/ai-build-integrity-maven-plugin/compare/v0.10.0...v0.11.0
