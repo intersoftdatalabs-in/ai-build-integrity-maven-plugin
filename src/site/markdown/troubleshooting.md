@@ -20,6 +20,14 @@ If you intentionally modified the file (e.g., updating a system prompt in `AGENT
 mvn validate
 ```
 
+The build log prints the same recovery guidance on failure, including the exact skip properties for a temporary local bypass:
+
+```bash
+mvn <your-goals> -Dai.integrity.skip=true
+# also accepted:
+mvn <your-goals> -Dskip.ai.integrity=true
+```
+
 2. **Did a formatting tool rewrite the file?**
    If a plugin like `spotless:apply` rewrote the Markdown layout, injected a license header, or altered line-endings mid-build, the hash will change and verification will fail. Ensure your formatters are configured to run *before* `generate-hashes` in the Maven lifecycle (see [Usage](./usage.html)).
 

@@ -94,6 +94,12 @@ class HashVerifyMojoTest {
       MojoExecutionException ex = assertThrows(MojoExecutionException.class, () -> mojo.execute());
       assertTrue(ex.getMessage().contains("FAILED"));
       assertTrue(ex.getMessage().contains("tampered"));
+      // Exception message stays short; recovery guidance is logged separately
+      assertFalse(ex.getMessage().contains("mvn validate"));
+      verify(log).error(contains("If these changes were intentional"));
+      verify(log).error(contains("mvn validate"));
+      verify(log).error(contains("-Dai.integrity.skip=true"));
+      verify(log).error(contains("-Dskip.ai.integrity=true"));
     }
 
     @Test
@@ -107,6 +113,26 @@ class HashVerifyMojoTest {
       // When/Then
       MojoExecutionException ex = assertThrows(MojoExecutionException.class, () -> mojo.execute());
       assertTrue(ex.getMessage().contains("FAILED"));
+      verify(log).error(contains("If these changes were intentional"));
+      verify(log).error(contains("mvn validate"));
+    }
+
+    @Test
+    @DisplayName("should log recovery advice when failOnError is false")
+    void shouldLogRecoveryAdviceWhenFailOnErrorFalse() throws Exception {
+      setField(mojo, "failOnError", false);
+      Files.write(
+          tempDir.resolve("AGENTS.md"), "# AI Agent Instructions".getBytes(StandardCharsets.UTF_8));
+      Files.write(
+          tempDir.resolve("AGENTS.md.sha256"),
+          "0000000000000000000000000000000000000000000000000000000000000000  AGENTS.md\n"
+              .getBytes(StandardCharsets.UTF_8));
+
+      assertDoesNotThrow(() -> mojo.execute());
+      verify(log).error(contains("If these changes were intentional"));
+      verify(log).error(contains("mvn validate"));
+      verify(log).error(contains("-Dai.integrity.skip=true"));
+      verify(log).error(contains("AI BUILD INTEGRITY WARNING"));
     }
 
     @Test
