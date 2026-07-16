@@ -228,6 +228,7 @@ public class ArtifactDigestsVerifyMojo extends AbstractMojo {
     if (failed > 0 || missing > 0) {
       String msg =
           "Artifact digest verification FAILED: " + failed + " failed, " + missing + " missing.";
+      IntegrityFailureAdvice.logArtifactDigestVerificationRecovery(log);
       if (failOnError) {
         throw new MojoExecutionException(msg);
       } else {

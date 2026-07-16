@@ -16,6 +16,7 @@
 package com.intsof.ai.build.integrity;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.Mockito.*;
 
 import java.lang.reflect.Field;
@@ -23,6 +24,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.project.MavenProject;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -38,6 +40,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class ArtifactDigestsVerifyMojoTest {
 
   @Mock private MavenProject project;
+  @Mock private Log log;
   @TempDir Path tempDir;
 
   private ArtifactDigestsVerifyMojo mojo;
@@ -45,7 +48,7 @@ class ArtifactDigestsVerifyMojoTest {
   @BeforeEach
   void setUp() throws Exception {
     mojo = new ArtifactDigestsVerifyMojo();
-    mojo.setLog(new org.apache.maven.plugin.logging.SystemStreamLog());
+    mojo.setLog(log);
     setField(mojo, "project", project);
     setField(mojo, "buildDirectory", tempDir.toString());
     setField(mojo, "algorithms", new String[] {"SHA-256"});
@@ -87,8 +90,11 @@ class ArtifactDigestsVerifyMojoTest {
       // Tamper with the artifact
       Files.write(jarFile, "tampered content".getBytes(StandardCharsets.UTF_8));
 
-      // When/Then - should throw
+      // When/Then - should throw and log recovery advice
       assertThrows(MojoExecutionException.class, () -> mojo.execute());
+      verify(log).error(contains("If these changes were intentional"));
+      verify(log).error(contains("mvn package"));
+      verify(log).error(contains("-Dai.integrity.skip=true"));
     }
 
     @Test

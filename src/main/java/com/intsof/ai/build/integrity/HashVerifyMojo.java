@@ -474,6 +474,7 @@ public class HashVerifyMojo extends AbstractMojo {
     if (failed > 0) {
       String msg =
           "Hash verification FAILED: " + failed + " file(s) have been modified or tampered with!";
+      IntegrityFailureAdvice.logHashVerificationRecovery(getLog());
       if (failOnError) {
         throw new MojoExecutionException(msg);
       } else {
