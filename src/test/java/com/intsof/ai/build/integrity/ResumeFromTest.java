@@ -103,6 +103,36 @@ class ResumeFromTest {
       assertTrue(ResumeFrom.matchesProject(basedir.getAbsolutePath(), project));
       assertTrue(ResumeFrom.matchesProject(basedir.getName(), project));
     }
+
+    @Test
+    @DisplayName("matches project basedir in OS-native forms")
+    void matchesBasedirInOsNativeForms() {
+      File basedir = tempDir.toFile();
+      when(project.getArtifactId()).thenReturn("module-b");
+      when(project.getGroupId()).thenReturn("com.example");
+      when(project.getBasedir()).thenReturn(basedir);
+
+      String absolute = basedir.getAbsolutePath();
+      String normalizedAbsolute = basedir.toPath().toAbsolutePath().normalize().toString();
+      String name = basedir.getName();
+      String relative = basedir.getParentFile().toPath().relativize(basedir.toPath()).toString();
+
+      assertTrue(
+          ResumeFrom.matchesProject(absolute, project), "absolute OS-native path: " + absolute);
+      assertTrue(
+          ResumeFrom.matchesProject(normalizedAbsolute, project),
+          "normalized absolute path: " + normalizedAbsolute);
+      assertTrue(
+          ResumeFrom.matchesProject(name, project), "basedir name (relative segment): " + name);
+      assertTrue(
+          ResumeFrom.matchesProject(relative, project), "relative path from parent: " + relative);
+      assertFalse(
+          ResumeFrom.matchesProject(basedir.getAbsolutePath() + File.separator + "child", project),
+          "unrelated absolute subpath must not match");
+      assertFalse(
+          ResumeFrom.matchesProject(name + "-other", project),
+          "near-miss bare name must not match");
+    }
   }
 
   @Nested
