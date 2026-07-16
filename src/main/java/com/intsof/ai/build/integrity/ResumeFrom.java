@@ -119,11 +119,15 @@ final class ResumeFrom {
 
     // groupId:artifactId (exactly one colon, not starting with colon)
     int colon = trimmed.indexOf(':');
-    if (colon > 0 && trimmed.indexOf(':', colon + 1) < 0) {
+    boolean windowsAbsolutePath =
+        colon == 1
+            && trimmed.length() > 2
+            && (trimmed.charAt(2) == '\\' || trimmed.charAt(2) == '/');
+    if (colon > 0 && trimmed.indexOf(':', colon + 1) < 0 && !windowsAbsolutePath) {
       String g = trimmed.substring(0, colon);
       String a = trimmed.substring(colon + 1);
-      if (!a.isEmpty()) {
-        return g.equals(groupId) && a.equals(artifactId);
+      if (!a.isEmpty() && g.equals(groupId) && a.equals(artifactId)) {
+        return true;
       }
     }
 
@@ -137,16 +141,17 @@ final class ResumeFrom {
     if (basedir != null) {
       Path projectPath = basedir.toPath().toAbsolutePath().normalize();
       try {
-        Path selectorPath = java.nio.file.Paths.get(trimmed).toAbsolutePath().normalize();
-        if (projectPath.equals(selectorPath)) {
+        Path relativeSelectorPath = java.nio.file.Paths.get(trimmed).normalize();
+        Path absoluteSelectorPath = relativeSelectorPath.toAbsolutePath().normalize();
+        if (projectPath.equals(absoluteSelectorPath)
+            || projectPath.endsWith(relativeSelectorPath)) {
           return true;
         }
       } catch (Exception ignored) {
         // not a usable path selector
       }
       // also accept basedir name or suffix path segment match
-      if (trimmed.equals(basedir.getName())
-          || projectPath.endsWith(java.nio.file.Paths.get(trimmed))) {
+      if (trimmed.equals(basedir.getName())) {
         return true;
       }
     }

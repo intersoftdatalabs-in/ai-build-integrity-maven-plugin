@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.13.2] - 2026-07-16
+
+### Fixed
+
+- **`ResumeFrom.matchesProject` Windows basedir paths**: Resume-from selector matching now correctly accepts absolute Windows drive-letter paths and relative basedir paths. Previously the single-colon `groupId:artifactId` heuristic misclassified Windows absolute paths like `C:\…\module-b` (treated as `groupId="C"`) and never reached the basedir comparison, causing `mvn -rf :module` to fail to re-seal on Windows. Path matching now normalizes both absolute and relative forms, checks `endsWith` against the basedir, and restores the basedir-name fallback as an independent match (#46).
+
 ## [0.13.1] - 2026-07-16
 
 ### Fixed
@@ -81,7 +87,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - .gitignore awareness and automatic directory pruning.
 - Machine-readable JSON audit reports for SIEM integration.
 
-[0.13.1]: https://github.com/intersoftdatalabs-in/ai-build-integrity-maven-plugin/compare/v0.13.0...HEAD
+[0.13.2]: https://github.com/intersoftdatalabs-in/ai-build-integrity-maven-plugin/compare/v0.13.1...HEAD
+[0.13.1]: https://github.com/intersoftdatalabs-in/ai-build-integrity-maven-plugin/compare/v0.13.0...v0.13.1
 [0.13.0]: https://github.com/intersoftdatalabs-in/ai-build-integrity-maven-plugin/compare/v0.12.0...v0.13.0
 [0.12.0]: https://github.com/intersoftdatalabs-in/ai-build-integrity-maven-plugin/compare/v0.11.1...v0.12.0
 [0.11.1]: https://github.com/intersoftdatalabs-in/ai-build-integrity-maven-plugin/compare/v0.11.0...v0.11.1
