@@ -38,6 +38,8 @@ class IntegrityFailureAdviceTest {
     verify(log).error(contains("mvn validate"));
     verify(log).error(contains("-D" + IntegrityFailureAdvice.SKIP_PROPERTY + "=true"));
     verify(log).error(contains("-D" + IntegrityFailureAdvice.SKIP_PROPERTY_ALT + "=true"));
+    // Spacer must be non-empty so backends that drop blank lines still keep the visual gap
+    verify(log).error(" ");
   }
 
   @Test

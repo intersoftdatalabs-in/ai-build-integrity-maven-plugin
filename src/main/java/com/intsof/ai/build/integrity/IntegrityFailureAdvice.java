@@ -34,6 +34,12 @@ public final class IntegrityFailureAdvice {
   private static final String BANNER =
       "------------------------------------------------------------------------";
 
+  /**
+   * Non-empty spacer between advice blocks. Empty {@code log.error("")} lines are dropped by some
+   * Maven / SLF4J backends and CI shippers, which collapses the intended visual gap.
+   */
+  private static final String SPACER = " ";
+
   private IntegrityFailureAdvice() {}
 
   /**
@@ -79,7 +85,7 @@ public final class IntegrityFailureAdvice {
     log.error(BANNER);
     log.error(intentionalLead);
     log.error(regenerateCommand);
-    log.error("");
+    log.error(SPACER);
     log.error(skipLead);
     log.error("  -D" + SKIP_PROPERTY + "=true");
     log.error("  (also accepted: -D" + SKIP_PROPERTY_ALT + "=true)");
