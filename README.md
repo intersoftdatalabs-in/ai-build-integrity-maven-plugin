@@ -58,7 +58,7 @@ The plugin is available on Maven Central as of version 0.9.0.
 <plugin>
     <groupId>com.intsof</groupId>
     <artifactId>ai-build-integrity-maven-plugin</artifactId>
-    <version>0.12.0</version>
+    <version>0.12.1</version>
     <configuration>
         <!-- Centralized ledger: no sidecar files in your source tree -->
         <hashFileMode>CENTRAL</hashFileMode>
@@ -100,7 +100,7 @@ Use `-Dai.integrity.reactorScope=FULL` when you need a forced full-tree re-seal 
             <plugin>
                 <groupId>com.intsof</groupId>
                 <artifactId>ai-build-integrity-maven-plugin</artifactId>
-                <version>0.12.0</version>
+                <version>0.12.1</version>
                 <configuration>
                     <hashFileMode>CENTRAL</hashFileMode>
                     <!-- Scan the entire repo, not just the current module's basedir -->

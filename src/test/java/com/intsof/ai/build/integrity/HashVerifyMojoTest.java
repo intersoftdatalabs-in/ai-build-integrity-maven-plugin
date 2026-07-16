@@ -286,36 +286,11 @@ class HashVerifyMojoTest {
   class ResumeModeTests {
 
     @Test
-    @DisplayName("should skip verification when module is resume target")
-    void shouldSkipVerificationForResumeTarget() throws Exception {
+    @DisplayName("should verify after re-seal on resume instead of skipping verification")
+    void shouldVerifyAfterResealOnResume() throws Exception {
       MavenExecutionRequest mockRequest = mock(MavenExecutionRequest.class);
       when(session.getRequest()).thenReturn(mockRequest);
-      when(mockRequest.getResumeFrom()).thenReturn("module-a");
-
-      when(project.getArtifactId()).thenReturn("module-a");
-      setField(mojo, "resumeFromModule", "module-a");
-
-      Path mdFile = tempDir.resolve("AGENTS.md");
-      Files.write(mdFile, "content".getBytes(StandardCharsets.UTF_8));
-      String hash = HashUtils.computeHash(mdFile, "SHA-256", false);
-      Files.write(
-          tempDir.resolve("AGENTS.md.sha256"),
-          (hash + "  AGENTS.md\n").getBytes(StandardCharsets.UTF_8));
-
-      mojo.execute();
-
-      verify(log).info(contains("Resume mode: skipping verification for module-a"));
-    }
-
-    @Test
-    @DisplayName("should verify normally when not the resume target")
-    void shouldVerifyWhenNotResumeTarget() throws Exception {
-      MavenExecutionRequest mockRequest = mock(MavenExecutionRequest.class);
-      when(session.getRequest()).thenReturn(mockRequest);
-      when(mockRequest.getResumeFrom()).thenReturn("module-a");
-
-      when(project.getArtifactId()).thenReturn("module-b");
-      setField(mojo, "resumeFromModule", "module-b");
+      when(mockRequest.getResumeFrom()).thenReturn(":module-a");
 
       Path mdFile = tempDir.resolve("AGENTS.md");
       Files.write(mdFile, "content".getBytes(StandardCharsets.UTF_8));
@@ -325,6 +300,26 @@ class HashVerifyMojoTest {
           (hash + "  AGENTS.md\n").getBytes(StandardCharsets.UTF_8));
 
       assertDoesNotThrow(() -> mojo.execute());
+      verify(log).info(contains("Resume mode: verifying hashes after re-seal"));
+      verify(log, never()).info(contains("skipping verification"));
+    }
+
+    @Test
+    @DisplayName("should verify normally when not a resume build")
+    void shouldVerifyWhenNotResumeBuild() throws Exception {
+      MavenExecutionRequest mockRequest = mock(MavenExecutionRequest.class);
+      when(session.getRequest()).thenReturn(mockRequest);
+      when(mockRequest.getResumeFrom()).thenReturn(null);
+
+      Path mdFile = tempDir.resolve("AGENTS.md");
+      Files.write(mdFile, "content".getBytes(StandardCharsets.UTF_8));
+      String hash = HashUtils.computeHash(mdFile, "SHA-256", false);
+      Files.write(
+          tempDir.resolve("AGENTS.md.sha256"),
+          (hash + "  AGENTS.md\n").getBytes(StandardCharsets.UTF_8));
+
+      assertDoesNotThrow(() -> mojo.execute());
+      verify(log, never()).info(contains("Resume mode: verifying hashes after re-seal"));
     }
   }
 

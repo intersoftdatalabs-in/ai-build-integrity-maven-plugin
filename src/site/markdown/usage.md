@@ -14,7 +14,7 @@ For a standard Maven application, attaching the plugin is incredibly simple. It 
         <plugin>
             <groupId>com.intsof</groupId>
             <artifactId>ai-build-integrity-maven-plugin</artifactId>
-            <version>0.12.0</version>
+            <version>0.12.1</version>
             <configuration>
                 <hashFileMode>CENTRAL</hashFileMode>
                 <!-- Define your hashing intensity -->
@@ -85,7 +85,7 @@ Add the following to your **root parent POM's** `<build><pluginManagement>` and 
             <plugin>
                 <groupId>com.intsof</groupId>
                 <artifactId>ai-build-integrity-maven-plugin</artifactId>
-                <version>0.12.0</version>
+                <version>0.12.1</version>
                 <configuration>
                     <hashFileMode>CENTRAL</hashFileMode>
                     <!-- Scan the entire repo from the root, not from each module's basedir -->
@@ -220,7 +220,7 @@ Generate cryptographic digests for your build artifacts to ensure supply-chain i
         <plugin>
             <groupId>com.intsof</groupId>
             <artifactId>ai-build-integrity-maven-plugin</artifactId>
-            <version>0.12.0</version>
+            <version>0.12.1</version>
             <executions>
                 <execution>
                     <id>generate-artifacts</id>

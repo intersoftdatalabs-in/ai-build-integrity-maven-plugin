@@ -140,8 +140,10 @@ public class HashGeneratorMojo extends AbstractMojo {
   private String forceIncludes;
 
   /**
-   * When set, the mojo regenerates hashes ONLY for this module in a resume scenario. This allows
-   * intentional edits during failed builds to pass verification.
+   * Optional explicit module selector for resume-from hash regeneration ({@code :artifactId},
+   * {@code groupId:artifactId}, or bare {@code artifactId}). When unset, a Maven {@code -rf} /
+   * {@code --resume-from} build automatically re-seals the resumed reactor (first reactor project
+   * when {@code executionRootOnly} is true; each module when false).
    */
   @Parameter(property = "ai.integrity.resumeFromModule")
   private String resumeFromModule;
@@ -175,29 +177,67 @@ public class HashGeneratorMojo extends AbstractMojo {
       return;
     }
 
+    boolean explicitResumeModule = resumeFromModule != null && !resumeFromModule.trim().isEmpty();
+    boolean resumeBuild = ResumeFrom.isResumeBuild(session) || explicitResumeModule;
+
     if (executionRootOnly && !project.isExecutionRoot()) {
-      getLog().info("Skipping HashGeneratorMojo execution in non-root project.");
-      return;
+      if (!ResumeFrom.allowNonRootGeneration(session, project, resumeFromModule)) {
+        if (resumeBuild) {
+          getLog()
+              .info(
+                  "Skipping hash regeneration for "
+                      + project.getArtifactId()
+                      + " (resume target is "
+                      + ResumeFrom.describeResumeTarget(session, project, resumeFromModule)
+                      + ")");
+        } else {
+          getLog().info("Skipping HashGeneratorMojo execution in non-root project.");
+        }
+        return;
+      }
+      getLog()
+          .info(
+              "Resume mode: allowing hash generation in non-root project "
+                  + project.getArtifactId()
+                  + " (execution root not in resumed reactor or explicit resume target)");
     }
 
-    String resumedProject = null;
-    if (session != null && session.getRequest() != null) {
-      resumedProject = session.getRequest().getResumeFrom();
-    }
-    boolean isResumeBuild = resumedProject != null && !resumedProject.isEmpty();
-
-    if (isResumeBuild && resumeFromModule != null && !resumeFromModule.isEmpty()) {
-      if (!project.getArtifactId().equals(resumeFromModule)) {
+    // On resume with executionRootOnly, only the designated project regenerates (first reactor
+    // project or explicit ai.integrity.resumeFromModule). Other modules that are the execution
+    // root still use shouldRegenerateHashes for skip decisions.
+    if (resumeBuild && executionRootOnly) {
+      if (!ResumeFrom.shouldRegenerateHashes(
+          session, project, resumeFromModule, executionRootOnly)) {
         getLog()
             .info(
                 "Skipping hash regeneration for "
                     + project.getArtifactId()
                     + " (resume target is "
-                    + resumedProject
+                    + ResumeFrom.describeResumeTarget(session, project, resumeFromModule)
                     + ")");
         return;
       }
-      getLog().info("Resume mode: regenerating hashes for " + resumeFromModule);
+      getLog()
+          .info(
+              "Resume mode: regenerating hashes for "
+                  + ResumeFrom.describeResumeTarget(session, project, resumeFromModule));
+    } else if (resumeBuild && explicitResumeModule) {
+      if (!ResumeFrom.matchesProject(resumeFromModule, project)) {
+        getLog()
+            .info(
+                "Skipping hash regeneration for "
+                    + project.getArtifactId()
+                    + " (resume target is "
+                    + resumeFromModule.trim()
+                    + ")");
+        return;
+      }
+      getLog().info("Resume mode: regenerating hashes for " + resumeFromModule.trim());
+    } else if (resumeBuild) {
+      getLog()
+          .info(
+              "Resume mode: regenerating hashes for "
+                  + ResumeFrom.describeResumeTarget(session, project, resumeFromModule));
     }
 
     final ReactorSealScope.Mode scopeMode;
@@ -218,8 +258,9 @@ public class HashGeneratorMojo extends AbstractMojo {
       return;
     }
 
-    boolean partial = ReactorSealScope.isPartialReactor(session, basePath);
-    boolean mergeCentral = ReactorSealScope.shouldMergeCentral(scopeMode, partial);
+    // Resume builds re-seal only the remaining reactor modules and merge into CENTRAL.
+    boolean partial = ReactorSealScope.isPartialReactor(session, basePath) || resumeBuild;
+    boolean mergeCentral = ReactorSealScope.shouldMergeCentral(scopeMode, partial) || resumeBuild;
     List<Path> walkRoots = ReactorSealScope.resolveWalkRoots(basePath, session, scopeMode, partial);
     List<Path> sealRootsForMerge =
         mergeCentral ? ReactorSealScope.computeSealRoots(session, basePath) : walkRoots;
