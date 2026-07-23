@@ -230,7 +230,10 @@ public class ArtifactDigestsVerifyMojo extends AbstractMojo {
           "Artifact digest verification FAILED: " + failed + " failed, " + missing + " missing.";
       IntegrityFailureAdvice.logArtifactDigestVerificationRecovery(log);
       if (failOnError) {
-        throw new MojoExecutionException(msg);
+        // Include recovery advice in the exception so Maven's final "Failed to execute goal"
+        // summary shows skip/re-seal guidance (log lines alone are easy to miss in long builds).
+        throw new MojoExecutionException(
+            msg + "\n" + IntegrityFailureAdvice.formatArtifactDigestVerificationRecovery());
       } else {
         log.error("------------------------------------------------------------------------");
         log.error("AI BUILD INTEGRITY WARNING: " + msg);

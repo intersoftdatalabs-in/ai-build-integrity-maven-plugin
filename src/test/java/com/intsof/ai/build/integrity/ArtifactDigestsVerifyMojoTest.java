@@ -90,8 +90,12 @@ class ArtifactDigestsVerifyMojoTest {
       // Tamper with the artifact
       Files.write(jarFile, "tampered content".getBytes(StandardCharsets.UTF_8));
 
-      // When/Then - should throw and log recovery advice
-      assertThrows(MojoExecutionException.class, () -> mojo.execute());
+      // When/Then - should throw and include recovery advice in exception + logs
+      MojoExecutionException ex = assertThrows(MojoExecutionException.class, () -> mojo.execute());
+      assertTrue(ex.getMessage().contains("FAILED"));
+      assertTrue(ex.getMessage().contains("mvn package"));
+      assertTrue(ex.getMessage().contains("-Dai.integrity.skip=true"));
+      assertTrue(ex.getMessage().contains("-Dskip.ai.integrity=true"));
       verify(log).error(contains("If these changes were intentional"));
       verify(log).error(contains("mvn package"));
       verify(log).error(contains("-Dai.integrity.skip=true"));

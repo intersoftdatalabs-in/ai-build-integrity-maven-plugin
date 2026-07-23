@@ -471,7 +471,10 @@ public class HashVerifyMojo extends AbstractMojo {
           "Hash verification FAILED: " + failed + " file(s) have been modified or tampered with!";
       IntegrityFailureAdvice.logHashVerificationRecovery(getLog());
       if (failOnError) {
-        throw new MojoExecutionException(msg);
+        // Include recovery advice in the exception so Maven's final "Failed to execute goal"
+        // summary shows skip/re-seal guidance (log lines alone are easy to miss in long builds).
+        throw new MojoExecutionException(
+            msg + "\n" + IntegrityFailureAdvice.formatHashVerificationRecovery());
       } else {
         getLog().error("------------------------------------------------------------------------");
         getLog().error("AI BUILD INTEGRITY WARNING: " + msg);

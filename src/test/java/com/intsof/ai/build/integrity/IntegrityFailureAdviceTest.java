@@ -15,6 +15,8 @@
  */
 package com.intsof.ai.build.integrity;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -54,6 +56,37 @@ class IntegrityFailureAdviceTest {
     verify(log).error(contains("mvn package"));
     verify(log).error(contains("-D" + IntegrityFailureAdvice.SKIP_PROPERTY + "=true"));
     verify(log).error(contains("-D" + IntegrityFailureAdvice.SKIP_PROPERTY_ALT + "=true"));
+  }
+
+  @Test
+  @DisplayName("formatHashVerificationRecovery includes validate and skip -D options")
+  void formatHashVerificationRecoveryEmitsExpectedGuidance() {
+    String text = IntegrityFailureAdvice.formatHashVerificationRecovery();
+
+    assertTrue(text.contains("If these changes were intentional"));
+    assertTrue(text.contains("mvn validate"));
+    assertTrue(text.contains("-D" + IntegrityFailureAdvice.SKIP_PROPERTY + "=true"));
+    assertTrue(text.contains("-D" + IntegrityFailureAdvice.SKIP_PROPERTY_ALT + "=true"));
+    assertFalse(text.contains("mvn package"));
+    // Spacer line must match logRecovery (non-empty) between regenerate and skip blocks
+    assertTrue(
+        text.contains("mvn validate\n \nTo temporarily skip"),
+        "formatRecovery must include SPACER between regenerate command and skip lead");
+  }
+
+  @Test
+  @DisplayName("formatArtifactDigestVerificationRecovery includes package and skip -D options")
+  void formatArtifactDigestVerificationRecoveryEmitsExpectedGuidance() {
+    String text = IntegrityFailureAdvice.formatArtifactDigestVerificationRecovery();
+
+    assertTrue(text.contains("If these changes were intentional"));
+    assertTrue(text.contains("mvn package"));
+    assertTrue(text.contains("-D" + IntegrityFailureAdvice.SKIP_PROPERTY + "=true"));
+    assertTrue(text.contains("-D" + IntegrityFailureAdvice.SKIP_PROPERTY_ALT + "=true"));
+    assertFalse(text.contains("mvn validate"));
+    assertTrue(
+        text.contains("mvn package\n \nTo temporarily skip"),
+        "formatRecovery must include SPACER between regenerate command and skip lead");
   }
 
   @Test
