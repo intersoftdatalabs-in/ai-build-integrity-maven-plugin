@@ -124,7 +124,8 @@ public final class IntegrityFailureAdvice {
 
   /**
    * Formats the same recovery content used by {@link #logRecovery} as a single multi-line string
-   * suitable for exception messages (no banner lines).
+   * suitable for exception messages (no banner lines). Includes the same non-empty {@link #SPACER}
+   * between regenerate and skip blocks so the visual gap matches the log output.
    *
    * @param intentionalLead lead sentence for intentional edits
    * @param regenerateCommand example Maven command to re-seal (already indented)
@@ -135,6 +136,8 @@ public final class IntegrityFailureAdvice {
     return intentionalLead
         + "\n"
         + regenerateCommand
+        + "\n"
+        + SPACER
         + "\n"
         + skipLead
         + "\n"

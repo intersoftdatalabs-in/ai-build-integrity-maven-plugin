@@ -68,6 +68,10 @@ class IntegrityFailureAdviceTest {
     assertTrue(text.contains("-D" + IntegrityFailureAdvice.SKIP_PROPERTY + "=true"));
     assertTrue(text.contains("-D" + IntegrityFailureAdvice.SKIP_PROPERTY_ALT + "=true"));
     assertFalse(text.contains("mvn package"));
+    // Spacer line must match logRecovery (non-empty) between regenerate and skip blocks
+    assertTrue(
+        text.contains("mvn validate\n \nTo temporarily skip"),
+        "formatRecovery must include SPACER between regenerate command and skip lead");
   }
 
   @Test
@@ -80,6 +84,9 @@ class IntegrityFailureAdviceTest {
     assertTrue(text.contains("-D" + IntegrityFailureAdvice.SKIP_PROPERTY + "=true"));
     assertTrue(text.contains("-D" + IntegrityFailureAdvice.SKIP_PROPERTY_ALT + "=true"));
     assertFalse(text.contains("mvn validate"));
+    assertTrue(
+        text.contains("mvn package\n \nTo temporarily skip"),
+        "formatRecovery must include SPACER between regenerate command and skip lead");
   }
 
   @Test
