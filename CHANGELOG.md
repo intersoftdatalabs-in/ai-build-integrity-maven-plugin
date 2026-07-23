@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.13.3] - 2026-07-23
+
+### Fixed
+
+- **Recovery advice in Maven goal-failure summary**: When `verify-hashes` or `verify-artifact-digests` fails with `failOnError=true`, re-seal and skip guidance (`mvn validate` / `mvn package`, `-Dai.integrity.skip=true`, `-Dskip.ai.integrity=true`) is now included in the `MojoExecutionException` message. Maven's final `Failed to execute goal` summary therefore shows how to correct or temporarily skip the integrity violation, not only the short "N file(s) have been modified" line. Plugin `log.error` recovery banners are unchanged (#49).
+
 ## [0.13.2] - 2026-07-16
 
 ### Fixed

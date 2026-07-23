@@ -94,8 +94,10 @@ class HashVerifyMojoTest {
       MojoExecutionException ex = assertThrows(MojoExecutionException.class, () -> mojo.execute());
       assertTrue(ex.getMessage().contains("FAILED"));
       assertTrue(ex.getMessage().contains("tampered"));
-      // Exception message stays short; recovery guidance is logged separately
-      assertFalse(ex.getMessage().contains("mvn validate"));
+      // Recovery guidance must be in the exception so Maven's final goal-failure summary shows it
+      assertTrue(ex.getMessage().contains("mvn validate"));
+      assertTrue(ex.getMessage().contains("-Dai.integrity.skip=true"));
+      assertTrue(ex.getMessage().contains("-Dskip.ai.integrity=true"));
       verify(log).error(contains("If these changes were intentional"));
       verify(log).error(contains("mvn validate"));
       verify(log).error(contains("-Dai.integrity.skip=true"));
@@ -113,6 +115,8 @@ class HashVerifyMojoTest {
       // When/Then
       MojoExecutionException ex = assertThrows(MojoExecutionException.class, () -> mojo.execute());
       assertTrue(ex.getMessage().contains("FAILED"));
+      assertTrue(ex.getMessage().contains("mvn validate"));
+      assertTrue(ex.getMessage().contains("-Dai.integrity.skip=true"));
       verify(log).error(contains("If these changes were intentional"));
       verify(log).error(contains("mvn validate"));
     }
