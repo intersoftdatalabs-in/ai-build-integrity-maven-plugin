@@ -10,6 +10,8 @@
 
 </div>
 
+This project follows the [Universal Code v1.0.0](https://github.com/monkeyking-hq/universal-code/blob/main/UC-v1.0.0.md).
+
 ---
 
 If your repository contains `AGENTS.md`, `SKILLS.md`, or AI instruction files, those files natively control what AI agents are allowed to do with your codebase during development, CI/CD, and production operations.

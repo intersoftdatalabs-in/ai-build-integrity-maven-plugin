@@ -1,3 +1,5 @@
+This project follows the Universal Code v1.0.0 — read https://github.com/monkeyking-hq/universal-code/blob/main/UC-EMBED-v1.0.0.md
+
 - Maven Site documentation is for end-users of the plugin.
 - CONTRIBUTING.md is for developers of the plugin.
 - Java 8 compatibility is required for the plugin.
